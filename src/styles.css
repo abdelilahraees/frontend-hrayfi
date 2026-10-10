@@ -1,1 +1,162 @@
-/* You can add global styles to this file, and also import other style files */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-heading: #0f172a;
+  --color-text: #475569;
+  --color-muted: #94a3b8;
+
+  --color-primary: #f59e0b;
+  --color-primary-dark: #d97706;
+  --color-secondary: #0ea5e9;
+
+  --color-dark: #0b1120;
+  --color-footer: #0f172a;
+  --color-surface: #ffffff;
+  --color-gray-bg: #f8fafc;
+  --color-border-light: #e2e8f0;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+  }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes shine {
+  0% { transform: translateX(-100%) skewX(-20deg); }
+  100% { transform: translateX(300%) skewX(-20deg); }
+}
+
+.anim-float { animation: float-y 4s ease-in-out infinite; }
+.anim-float-slow { animation: float-y 6s ease-in-out infinite; }
+.group:hover .group-hover\:anim-wobble { animation: wobble 0.6s ease-in-out; }
+.anim-ping-slow { animation: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.anim-draw { stroke-dasharray: 1000; animation: draw-line 2.5s ease forwards; }
+
+.card-shine { position: relative; overflow: hidden; }
+.card-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%);
+  transform: translateX(-100%) skewX(-20deg);
+  pointer-events: none;
+}
+.card-shine:hover::before { animation: shine 0.9s ease-out; }
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes drip {
+  0% { transform: translateY(-4px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(14px); opacity: 0; }
+}
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes brush-stroke {
+  0% { transform: translateX(-3px) rotate(-8deg); }
+  50% { transform: translateX(3px) rotate(8deg); }
+  100% { transform: translateX(-3px) rotate(-8deg); }
+}
+@keyframes snow-drift {
+  0% { transform: translateY(-8px); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(16px); opacity: 0; }
+}
+
+.anim-spin-slow { animation: spin-slow 8s linear infinite; }
+.anim-drip { animation: drip 1.8s ease-in infinite; }
+.anim-bounce-soft { animation: bounce-soft 2s ease-in-out infinite; }
+.anim-brush { animation: brush-stroke 2.4s ease-in-out infinite; transform-origin: bottom center; }
+.anim-snow { animation: snow-drift 2.2s ease-in infinite; }
+
+/* ===== Entrance stagger animation ===== */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-fade-up {
+  opacity: 0;
+  animation: fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.anim-delay-100 { animation-delay: 0.1s; }
+.anim-delay-200 { animation-delay: 0.2s; }
+.anim-delay-300 { animation-delay: 0.3s; }
+.anim-delay-400 { animation-delay: 0.4s; }
+.anim-delay-500 { animation-delay: 0.5s; }
+.anim-delay-700 { animation-delay: 0.7s; }
+
+/* ===== Scroll-reveal directive styles ===== */
+[appScrollReveal] {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+[appScrollReveal].is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+[appScrollReveal][data-reveal='line'] {
+  opacity: 1;
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 1.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+[appScrollReveal][data-reveal='line'].is-revealed {
+  transform: scaleY(1);
+}
+[appScrollReveal][data-reveal='pop'] {
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 0.5s ease-out, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+[appScrollReveal][data-reveal='pop'].is-revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [appScrollReveal],
+  .anim-fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
