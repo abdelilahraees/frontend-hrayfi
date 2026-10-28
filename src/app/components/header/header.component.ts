@@ -1,6 +1,16 @@
-import { Component, HostListener, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map } from 'rxjs';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -11,6 +21,29 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 export class HeaderComponent {
   protected readonly scrolled = signal(false);
   protected readonly mobileOpen = signal(false);
+
+  // True while the router is fetching a lazy page
+  protected readonly navigating = toSignal(
+    inject(Router).events.pipe(
+      filter(
+        (e) =>
+          e instanceof NavigationStart ||
+          e instanceof NavigationEnd ||
+          e instanceof NavigationCancel ||
+          e instanceof NavigationError,
+      ),
+      map((e) => e instanceof NavigationStart),
+    ),
+    { initialValue: false },
+  );
+
+  protected readonly links = [
+    { label: 'Accueil', href: '/' },
+    { label: 'Artisans', href: '/artisans' },
+    { label: 'Services', href: '/services' },
+    { label: 'Comment ça marche', href: '/how-it-works' },
+    { label: 'Contact', href: '/contact' },
+  ];
 
   @HostListener('window:scroll')
   onScroll() {

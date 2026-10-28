@@ -1,122 +1,96 @@
 @let open = mobileOpen();
 @let isScrolled = scrolled();
+@let isNavigating = navigating();
 
 <header
-  [ngClass]="{
-    'bg-footer/95 shadow-lg backdrop-blur': isScrolled,
-    'bg-footer': !isScrolled
-  }"
-  class="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+  [ngClass]="{ 'shadow-[0_2px_0_rgb(16_48_42/0.08)]': isScrolled }"
+  class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur transition-shadow duration-300"
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-20">
+    <div class="flex items-center justify-between h-18">
       <!-- Logo -->
-      <a routerLink="/" class="flex items-center gap-2 shrink-0" (click)="closeMobile()">
+      <a routerLink="/" class="group flex items-center gap-2.5 shrink-0" (click)="closeMobile()">
         <span
-          class="w-10 h-10 rounded-lg bg-primary text-footer font-heading font-bold text-xl flex items-center justify-center"
+          class="relative grid place-items-center w-10 h-10 rounded-[14px] bg-menthe border-2 border-encre font-display font-extrabold text-2xl leading-none pt-1 transition-transform duration-300 group-hover:-rotate-6"
         >
-          H
+          h
+          <span class="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-citron border-2 border-encre"></span>
         </span>
-        <span class="font-heading text-white text-xl tracking-wide">
-          Hra<strong class="text-primary">yfi</strong>
-        </span>
+        <span class="font-display font-extrabold text-[26px] leading-none pt-1">hrayfi</span>
+        <span class="hidden sm:inline font-arabic text-lg text-encre-soft leading-none" lang="ar">حرايفي</span>
       </a>
 
       <!-- Desktop Nav -->
-      <nav class="hidden lg:flex items-center gap-8">
-        <a
-          routerLink="/"
-          routerLinkActive="text-primary"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="text-white/80 hover:text-primary transition-colors text-sm font-medium"
-          >Accueil</a
-        >
-        <a
-          routerLink="/artisans"
-          routerLinkActive="text-primary"
-          class="text-white/80 hover:text-primary transition-colors text-sm font-medium"
-          >Artisans</a
-        >
-        <a
-          routerLink="/services"
-          routerLinkActive="text-primary"
-          class="text-white/80 hover:text-primary transition-colors text-sm font-medium"
-          >Services</a
-        >
-        <a
-          routerLink="/how-it-works"
-          routerLinkActive="text-primary"
-          class="text-white/80 hover:text-primary transition-colors text-sm font-medium"
-          >Comment ça marche</a
-        >
-        <a
-          routerLink="/contact"
-          routerLinkActive="text-primary"
-          class="text-white/80 hover:text-primary transition-colors text-sm font-medium"
-          >Contact</a
-        >
+      <nav class="hidden lg:flex items-center gap-1" aria-label="Navigation principale">
+        @for (link of links; track link.href) {
+          <a
+            [routerLink]="link.href"
+            routerLinkActive="!bg-menthe-50 !text-menthe-deep"
+            [routerLinkActiveOptions]="{ exact: link.href === '/' }"
+            class="px-4 py-2 rounded-full text-[15px] font-semibold text-encre/80 hover:text-encre hover:bg-menthe-50 transition-colors"
+            >{{ link.label }}</a
+          >
+        }
       </nav>
 
       <!-- CTA -->
-      <div class="hidden lg:flex items-center gap-3">
-        <a
-          routerLink="/login"
-          class="text-white/80 hover:text-primary transition-colors text-sm font-medium"
-          >Se connecter</a
-        >
-        <a
-          routerLink="/register"
-          class="inline-flex items-center gap-2 bg-primary text-footer font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-white transition-colors"
-        >
-          Commencer
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
+      <div class="hidden lg:flex items-center gap-4">
+        <a routerLink="/login" class="text-[15px] font-semibold text-encre/80 hover:text-encre">Se connecter</a>
+        <a routerLink="/post-project" class="btn btn-citron !py-2.5 !px-5 !text-base">Publier un projet</a>
       </div>
 
       <!-- Mobile toggle -->
       <button
         type="button"
         (click)="toggleMobile()"
-        class="lg:hidden p-2 text-white"
-        aria-label="Menu"
+        class="press lg:hidden grid place-items-center w-11 h-11 -mr-1 rounded-full border-2 border-encre bg-white"
+        [attr.aria-expanded]="open"
+        aria-controls="mobile-menu"
+        [attr.aria-label]="open ? 'Fermer le menu' : 'Ouvrir le menu'"
       >
         @if (open) {
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
           </svg>
         } @else {
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-width="2.5" d="M4 8h16M4 16h10" />
           </svg>
         }
       </button>
     </div>
   </div>
 
+  <!-- Page-change progress (lazy pages) -->
+  @if (isNavigating) {
+    <div class="nav-progress absolute inset-x-0 bottom-0 h-1 bg-menthe rounded-r-full" role="progressbar" aria-label="Chargement de la page"></div>
+  }
+
   <!-- Mobile Menu -->
   @if (open) {
-    <div class="lg:hidden bg-footer border-t border-white/10">
-      <nav class="px-4 py-4 flex flex-col gap-1">
-        <a routerLink="/" (click)="closeMobile()" class="text-white/90 hover:text-primary py-2.5 text-sm font-medium">Accueil</a>
-        <a routerLink="/artisans" (click)="closeMobile()" class="text-white/90 hover:text-primary py-2.5 text-sm font-medium">Artisans</a>
-        <a routerLink="/services" (click)="closeMobile()" class="text-white/90 hover:text-primary py-2.5 text-sm font-medium">Services</a>
-        <a routerLink="/how-it-works" (click)="closeMobile()" class="text-white/90 hover:text-primary py-2.5 text-sm font-medium">Comment ça marche</a>
-        <a routerLink="/contact" (click)="closeMobile()" class="text-white/90 hover:text-primary py-2.5 text-sm font-medium">Contact</a>
-        <div class="h-px bg-white/10 my-2"></div>
-        <a routerLink="/login" (click)="closeMobile()" class="text-white/90 hover:text-primary py-2.5 text-sm font-medium">Se connecter</a>
-        <a
-          routerLink="/register"
-          (click)="closeMobile()"
-          class="mt-2 inline-flex items-center justify-center gap-2 bg-primary text-footer font-semibold text-sm px-5 py-3 rounded-full"
-        >
-          Commencer
-        </a>
+    <div
+      id="mobile-menu"
+      animate.enter="enter-drop"
+      animate.leave="leave-lift"
+      class="lg:hidden bg-white border-t-2 border-encre/10"
+    >
+      <nav class="px-4 pt-3 pb-6 flex flex-col gap-1" aria-label="Navigation mobile">
+        @for (link of links; track link.href) {
+          <a
+            [routerLink]="link.href"
+            routerLinkActive="!bg-menthe-50"
+            [routerLinkActiveOptions]="{ exact: link.href === '/' }"
+            (click)="closeMobile()"
+            class="font-display font-bold text-2xl px-4 py-2.5 rounded-2xl hover:bg-menthe-50"
+            >{{ link.label }}</a
+          >
+        }
+        <a routerLink="/login" (click)="closeMobile()" class="mt-3 px-4 py-2 font-semibold text-encre/80">Se connecter</a>
+        <a routerLink="/post-project" (click)="closeMobile()" class="btn btn-citron mt-3">Publier un projet</a>
       </nav>
     </div>
   }
 </header>
 
 <!-- Spacer so content doesn't hide under fixed header -->
-<div class="h-20"></div>
+<div class="h-18"></div>
