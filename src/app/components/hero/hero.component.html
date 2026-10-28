@@ -1,198 +1,88 @@
-<section class="relative overflow-hidden bg-gradient-to-br from-dark via-footer to-dark">
-  <!-- Grid pattern overlay -->
-  <div
-    class="absolute inset-0 opacity-[0.07] pointer-events-none"
-    style="background-image: linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px); background-size: 48px 48px;"
-    aria-hidden="true"
-  ></div>
+<section class="relative overflow-hidden">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-20 lg:pt-16 lg:pb-28 grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+    <!-- Copy + search -->
+    <div class="lg:col-span-7 relative z-10">
+      <h1 class="text-[3.2rem] sm:text-7xl xl:text-[5.6rem] leading-[0.95]">
+        Un souci à la maison&nbsp;? On a l'artisan qu'il vous faut.
+      </h1>
 
-  <!-- Glow blobs -->
-  <div
-    class="absolute top-1/4 -left-32 w-[500px] h-[500px] rounded-full bg-primary/20 blur-3xl pointer-events-none"
-    aria-hidden="true"
-  ></div>
-  <div
-    class="absolute -bottom-32 right-0 w-[500px] h-[500px] rounded-full bg-secondary/20 blur-3xl pointer-events-none"
-    aria-hidden="true"
-  ></div>
+      <p class="mt-6 text-lg sm:text-xl text-encre-soft max-w-[42ch] leading-relaxed">
+        Fuite, panne, peinture à refaire : décrivez le problème, recevez des devis gratuits
+        d'artisans vérifiés près de chez vous.
+      </p>
 
-  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pt-24 lg:pb-28">
-    <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-      <!-- Left -->
-      <div class="lg:col-span-7">
-        <span
-          class="anim-fade-up inline-flex items-center gap-2 bg-white/5 border border-white/10 text-white/90 text-xs font-semibold tracking-wider uppercase px-4 py-2 rounded-full backdrop-blur"
+      <form class="mt-9 max-w-2xl" role="search" (submit)="$event.preventDefault()">
+        <div
+          class="bg-white rounded-[28px] sm:rounded-full border-2 border-encre p-2 flex flex-col sm:flex-row sm:items-center gap-1 shadow-[0_6px_0_var(--color-encre)] focus-within:shadow-[0_6px_0_var(--color-menthe-deep)] transition-shadow"
         >
-          <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-          Plateforme n°1 au Maroc
-        </span>
+          <label class="flex-1 flex items-center gap-3 pl-4 pr-2 py-2 cursor-text">
+            <svg class="w-5 h-5 shrink-0 text-encre-soft" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+            </svg>
+            <span class="sr-only">Quel travail ?</span>
+            <input
+              type="text"
+              name="service"
+              placeholder="Quel travail ? Ex. fuite d'eau"
+              class="w-full bg-transparent text-base sm:text-[17px] placeholder:text-encre-soft/70 focus:outline-none"
+            />
+          </label>
+          <span class="hidden sm:block w-0.5 h-8 bg-encre/10 rounded-full"></span>
+          <label class="sm:w-40 flex items-center gap-3 pl-4 pr-2 py-2 border-t-2 sm:border-t-0 border-encre/10 cursor-text">
+            <span class="sr-only">Ville</span>
+            <input
+              type="text"
+              name="city"
+              placeholder="Ville"
+              class="w-full bg-transparent text-base sm:text-[17px] placeholder:text-encre-soft/70 focus:outline-none"
+            />
+          </label>
+          <button type="submit" class="btn btn-menthe !shadow-none !border-encre hover:!translate-y-0 active:!translate-y-0 active:scale-95">
+            Trouver
+          </button>
+        </div>
 
-        <h1
-          class="anim-fade-up anim-delay-100 mt-6 font-heading text-white text-5xl sm:text-6xl lg:text-7xl leading-[1.05] font-extrabold"
-        >
-          L'artisan qu'il vous faut,
-          <span class="block mt-2">
-            <span
-              class="bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-transparent"
-            >
-              à portée de clic.
-            </span>
-          </span>
-        </h1>
-
-        <p class="anim-fade-up anim-delay-300 mt-6 text-white/70 text-lg sm:text-xl max-w-xl leading-relaxed">
-          Plombiers, électriciens, menuisiers, peintres… Trouvez un professionnel
-          vérifié près de chez vous, en quelques secondes.
-        </p>
-
-        <!-- Omnibar search -->
-        <form
-          class="anim-fade-up anim-delay-500 group/omni mt-8 relative max-w-2xl"
-          (submit)="$event.preventDefault()"
-        >
-          <!-- Glow halo (focus-within) -->
-          <div
-            class="absolute -inset-1 bg-gradient-to-r from-primary/40 via-amber-300/30 to-primary/40 rounded-2xl blur opacity-0 group-focus-within/omni:opacity-100 transition-opacity duration-500 pointer-events-none"
-            aria-hidden="true"
-          ></div>
-
-          <div
-            class="relative bg-white rounded-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.5)] p-2 flex flex-col sm:flex-row gap-2 ring-1 ring-black/5 group-focus-within/omni:ring-primary/40 transition-all"
-          >
-            <!-- Field: service -->
-            <label class="flex-1 flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-gray-bg transition-colors cursor-text">
-              <svg class="w-5 h-5 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Quel service ? (ex. plombier)"
-                class="w-full bg-transparent text-heading placeholder:text-muted focus:outline-none text-sm sm:text-base"
-              />
-            </label>
-
-            <div class="hidden sm:block w-px my-2 bg-border-light"></div>
-
-            <!-- Field: location -->
-            <label class="flex-1 flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-gray-bg transition-colors cursor-text">
-              <svg class="w-5 h-5 text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Votre ville"
-                class="w-full bg-transparent text-heading placeholder:text-muted focus:outline-none text-sm sm:text-base"
-              />
-            </label>
-
-            <!-- Submit -->
+        <div class="mt-6 flex flex-wrap items-center gap-2">
+          <span class="text-sm font-semibold text-encre-soft mr-1">Souvent demandé :</span>
+          @for (p of popular; track p.label) {
             <button
-              type="submit"
-              class="relative overflow-hidden bg-gradient-to-br from-primary to-primary-dark text-white font-semibold px-6 py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/30 hover:shadow-primary/50 hover:-translate-y-0.5 transition-all"
+              type="button"
+              class="press inline-flex items-center gap-1.5 rounded-full bg-menthe-50 hover:bg-citron-50 border-2 border-transparent hover:border-encre/15 pl-1.5 pr-3.5 py-1 text-sm font-semibold"
             >
-              <span class="relative z-10 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
-                </svg>
-                Rechercher
-              </span>
-              <!-- Button shine on hover -->
-              <span
-                class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700"
-                aria-hidden="true"
-              ></span>
+              <app-sticker [name]="p.sticker" class="w-6 h-6 !filter-none" />
+              {{ p.label }}
             </button>
-          </div>
-
-          <!-- Quick suggestions -->
-          <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
-            <span class="text-white/50">Populaires :</span>
-            @for (s of ['Plombier', 'Électricien', 'Peintre', 'Menuisier']; track s) {
-              <button
-                type="button"
-                class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:border-primary/40 hover:text-white transition-colors"
-              >
-                {{ s }}
-              </button>
-            }
-          </div>
-        </form>
-
-        <!-- Trust row -->
-        <div class="anim-fade-up anim-delay-700 mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-white/60 text-sm">
-          <div class="flex items-center gap-2">
-            <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            Artisans vérifiés
-          </div>
-          <div class="flex items-center gap-2">
-            <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            Devis en 24h
-          </div>
-          <div class="flex items-center gap-2">
-            <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-            Note moyenne 4.8 / 5
-          </div>
+          }
         </div>
-      </div>
+      </form>
 
-      <!-- Right: visual -->
-      <div class="lg:col-span-5 relative h-[480px] lg:h-[560px] hidden md:block">
-        <!-- Main image -->
-        <div
-          class="absolute top-0 right-0 w-[80%] h-[75%] rounded-3xl bg-cover bg-center shadow-2xl ring-1 ring-white/10"
-          style="background-image: url('/img/hero-main.jpg')"
-        ></div>
+      <p class="mt-10 flex items-center gap-3 text-[15px]">
+        <span class="flex text-[#e9b800]" aria-hidden="true">★★★★★</span>
+        <span><strong>4,8 sur 5</strong><span class="text-encre-soft">&nbsp;d'après 12 000 avis de clients</span></span>
+      </p>
+    </div>
 
-        <!-- Accent image -->
-        <div
-          class="absolute bottom-0 left-0 w-[58%] h-[48%] rounded-3xl bg-cover bg-center shadow-2xl ring-8 ring-footer"
-          style="background-image: url('/img/hero-accent.jpg')"
-        ></div>
+    <!-- Visual: blob photo, sticker cluster -->
+    <div class="lg:col-span-5 relative mx-auto w-[82%] sm:w-full max-w-md lg:max-w-none" aria-hidden="true">
+      <div class="absolute inset-[-6%] blob-b bg-citron"></div>
+      <div class="absolute inset-[4%_-4%_-2%_8%] blob-c bg-argile"></div>
+      <div
+        class="relative blob-a aspect-[4/5] bg-cover bg-center border-2 border-encre"
+        style="background-image: url('/img/hero-main.jpg')"
+      ></div>
 
-        <!-- Floating card: rating -->
-        <div
-          class="absolute top-6 -left-2 lg:left-0 bg-white rounded-2xl shadow-2xl p-4 flex items-center gap-3 min-w-[200px]"
-        >
-          <div class="w-11 h-11 rounded-xl bg-primary/15 text-primary flex items-center justify-center">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-          </div>
-          <div>
-            <div class="font-heading font-bold text-heading text-lg leading-none">4.8 / 5</div>
-            <div class="text-text text-xs mt-1">+ 12 000 avis</div>
-          </div>
-        </div>
+      <app-sticker name="wrench" [tilt]="-12" class="slap-in absolute -left-6 top-[18%] w-20 sm:w-24" style="animation-delay: 0.25s" />
+      <app-sticker name="bolt" [tilt]="10" class="slap-in absolute -right-3 top-[6%] w-16 sm:w-20" style="animation-delay: 0.4s" />
+      <app-sticker name="roller" [tilt]="-8" class="slap-in absolute -right-5 bottom-[22%] w-20 sm:w-24" style="animation-delay: 0.55s" />
+      <app-sticker name="house" [tilt]="6" class="slap-in absolute left-[10%] -bottom-4 w-16 sm:w-20" style="animation-delay: 0.7s" />
 
-        <!-- Floating card: verified -->
-        <div
-          class="absolute bottom-6 right-0 lg:-right-2 bg-white rounded-2xl shadow-2xl p-4 flex items-center gap-3"
-        >
-          <div class="w-11 h-11 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-          </div>
-          <div>
-            <div class="font-heading font-bold text-heading text-sm leading-none">2 500+ artisans</div>
-            <div class="text-text text-xs mt-1">Tous vérifiés</div>
-          </div>
-        </div>
+      <!-- Little review bubble -->
+      <div
+        class="slap-in absolute left-[-4%] bottom-[30%] hidden sm:flex items-center gap-2 bg-white border-2 border-encre rounded-2xl rounded-bl-sm px-3.5 py-2 shadow-[0_4px_0_var(--color-encre)] text-sm font-semibold"
+        style="--tilt: -3deg; animation-delay: 0.85s"
+      >
+        <span class="text-[#e9b800]">★★★★★</span> « Venu en 1 h ! »
       </div>
     </div>
-  </div>
-
-  <!-- Bottom divider wave -->
-  <div class="relative">
-    <svg class="w-full h-12 lg:h-16" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true">
-      <path d="M0 60 L1440 60 L1440 20 Q720 60 0 20 Z" fill="white" />
-    </svg>
   </div>
 </section>
