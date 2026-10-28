@@ -1,23 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Baloo+Bhaijaan+2:wght@700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @theme {
-  --color-heading: #0f172a;
-  --color-text: #475569;
-  --color-muted: #94a3b8;
+  /* Hrayfi "menthe & soleil": mint tea on a sunny terrace */
+  --color-menthe: #22b07d;
+  --color-menthe-deep: #0e7a55; /* mint dark enough for text on white */
+  --color-menthe-50: #e9f8f1;
+  --color-argile: #f4b9a6;
+  --color-argile-50: #fdefea;
+  --color-citron: #ffe14d;
+  --color-citron-50: #fff9d9;
+  --color-encre: #10302a;
+  --color-encre-soft: #4a6660;
 
-  --color-primary: #f59e0b;
-  --color-primary-dark: #d97706;
-  --color-secondary: #0ea5e9;
-
-  --color-dark: #0b1120;
-  --color-footer: #0f172a;
-  --color-surface: #ffffff;
-  --color-gray-bg: #f8fafc;
-  --color-border-light: #e2e8f0;
-
-  --font-sans: 'Inter', sans-serif;
-  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+  --font-display: 'Baloo 2', 'Atkinson Hyperlegible Next', sans-serif;
+  --font-arabic: 'Baloo Bhaijaan 2', sans-serif;
 }
 
 @layer base {
@@ -26,137 +24,127 @@
   }
   body {
     font-family: var(--font-sans);
-    color: var(--color-text);
+    background: #ffffff;
+    color: var(--color-encre);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.02;
     letter-spacing: -0.015em;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-menthe);
+    outline-offset: 3px;
+    border-radius: 6px;
   }
 }
 
-@keyframes float-y {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-@keyframes wobble {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-6deg); }
-  75% { transform: rotate(6deg); }
-}
-@keyframes draw-line {
-  from { stroke-dashoffset: 1000; }
-  to { stroke-dashoffset: 0; }
-}
-@keyframes ping-slow {
-  0% { transform: scale(1); opacity: 0.6; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-@keyframes shine {
-  0% { transform: translateX(-100%) skewX(-20deg); }
-  100% { transform: translateX(300%) skewX(-20deg); }
+@layer components {
+  /* Chunky button: ink outline + solid ink shadow that the button sinks into on press */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 border-encre px-6 py-3 font-display text-[17px] font-bold leading-none text-encre;
+    box-shadow: 0 4px 0 var(--color-encre);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--color-encre); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--color-encre); }
+  .btn-citron { @apply bg-citron hover:bg-[#ffe86f]; }
+  .btn-menthe { @apply bg-menthe hover:bg-[#3cc292]; }
+  .btn-white { @apply bg-white hover:bg-menthe-50; }
+
+  /* Radio rendered as a pill */
+  .chip {
+    @apply inline-flex items-center gap-2 cursor-pointer select-none rounded-full border-2 border-encre/15 bg-white px-4 py-2 text-[15px] font-semibold transition-[color,background-color,border-color,transform] duration-150
+      hover:border-menthe active:scale-[0.96]
+      has-checked:border-encre has-checked:bg-menthe has-checked:text-encre
+      has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-menthe;
+  }
+
+  .field {
+    @apply mt-2 w-full rounded-2xl border-2 border-encre/15 bg-white px-4 py-3 text-base placeholder:text-encre-soft/60
+      focus:outline-none focus:border-menthe focus:ring-4 focus:ring-menthe/20
+      aria-invalid:border-[#d23c3c] aria-invalid:ring-[#d23c3c]/15;
+  }
 }
 
-.anim-float { animation: float-y 4s ease-in-out infinite; }
-.anim-float-slow { animation: float-y 6s ease-in-out infinite; }
-.group:hover .group-hover\:anim-wobble { animation: wobble 0.6s ease-in-out; }
-.anim-ping-slow { animation: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
-.anim-draw { stroke-dasharray: 1000; animation: draw-line 2.5s ease forwards; }
+/* Organic blob masks for photos; they slowly reshape on hover */
+.blob-a { border-radius: 58% 42% 52% 48% / 46% 56% 44% 54%; }
+.blob-b { border-radius: 44% 56% 40% 60% / 58% 42% 58% 42%; }
+.blob-c { border-radius: 63% 37% 56% 44% / 40% 50% 50% 60%; }
+.blob-a, .blob-b, .blob-c { transition: border-radius 0.7s var(--ease-out); }
+.group:hover .blob-a { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
+.group:hover .blob-b { border-radius: 55% 45% 60% 40% / 45% 55% 40% 60%; }
+.group:hover .blob-c { border-radius: 48% 52% 42% 58% / 56% 44% 58% 42%; }
 
-.card-shine { position: relative; overflow: hidden; }
-.card-shine::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%);
-  transform: translateX(-100%) skewX(-20deg);
-  pointer-events: none;
+/* Die-cut sticker look: white border + soft drop shadow around any SVG */
+.sticker {
+  filter: drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff)
+    drop-shadow(0 -2.5px 0 #fff) drop-shadow(0 6px 8px rgb(16 48 42 / 0.18));
 }
-.card-shine:hover::before { animation: shine 0.9s ease-out; }
+@keyframes wiggle {
+  0%, 100% { transform: rotate(var(--tilt, 0deg)); }
+  30% { transform: rotate(calc(var(--tilt, 0deg) - 10deg)) scale(1.06); }
+  60% { transform: rotate(calc(var(--tilt, 0deg) + 7deg)) scale(1.06); }
+}
+.sticker { transform: rotate(var(--tilt, 0deg)); }
+.sticker:hover, .group:hover .sticker { animation: wiggle 0.55s var(--ease-out); }
 
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+/* ===== Motion =====
+   Used with Angular's native animate.enter / animate.leave (no @angular/animations). */
+:root {
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@keyframes drip {
-  0% { transform: translateY(-4px); opacity: 0; }
-  30% { opacity: 1; }
-  100% { transform: translateY(14px); opacity: 0; }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes lift-out { to { opacity: 0; transform: translateY(-8px); } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes fade-out { to { opacity: 0; } }
+.enter-drop { animation: drop-in 0.28s var(--ease-out); }
+.leave-lift { animation: lift-out 0.18s ease-in forwards; }
+.enter-rise { animation: rise-in 0.35s var(--ease-out); }
+.leave-fade { animation: fade-out 0.15s ease-in forwards; }
+
+/* The one page-load moment: hero stickers get slapped on, one after another */
+@keyframes slap {
+  0% { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(1.6); }
+  70% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(0.94); }
+  100% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
 }
-@keyframes bounce-soft {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-@keyframes brush-stroke {
-  0% { transform: translateX(-3px) rotate(-8deg); }
-  50% { transform: translateX(3px) rotate(8deg); }
-  100% { transform: translateX(-3px) rotate(-8deg); }
-}
-@keyframes snow-drift {
-  0% { transform: translateY(-8px); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translateY(16px); opacity: 0; }
+.slap-in { animation: slap 0.45s var(--ease-back) both; }
+
+/* Press feedback for non-.btn actions */
+.press { transition: transform 0.12s ease, background-color 0.15s, color 0.15s, border-color 0.15s; }
+.press:active { transform: scale(0.96); }
+
+/* Skeleton: mint-tinted surface with a slow sheen */
+@keyframes sheen { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.skeleton {
+  background: linear-gradient(100deg, #d6efe3 35%, #ecf8f2 50%, #d6efe3 65%);
+  background-size: 200% 100%;
+  animation: sheen 1.6s linear infinite;
+  border-radius: 999px;
 }
 
-.anim-spin-slow { animation: spin-slow 8s linear infinite; }
-.anim-drip { animation: drip 1.8s ease-in infinite; }
-.anim-bounce-soft { animation: bounce-soft 2s ease-in-out infinite; }
-.anim-brush { animation: brush-stroke 2.4s ease-in-out infinite; transform-origin: bottom center; }
-.anim-snow { animation: snow-drift 2.2s ease-in infinite; }
-
-/* ===== Entrance stagger animation ===== */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(28px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Page-change progress bar: only appears if loading takes longer than 150 ms */
+@keyframes progress-grow {
+  0% { transform: scaleX(0); opacity: 1; }
+  100% { transform: scaleX(0.85); opacity: 1; }
 }
-.anim-fade-up {
+.nav-progress {
+  transform-origin: left;
   opacity: 0;
-  animation: fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.anim-delay-100 { animation-delay: 0.1s; }
-.anim-delay-200 { animation-delay: 0.2s; }
-.anim-delay-300 { animation-delay: 0.3s; }
-.anim-delay-400 { animation-delay: 0.4s; }
-.anim-delay-500 { animation-delay: 0.5s; }
-.anim-delay-700 { animation-delay: 0.7s; }
-
-/* ===== Scroll-reveal directive styles ===== */
-[appScrollReveal] {
-  opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-[appScrollReveal].is-revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-[appScrollReveal][data-reveal='line'] {
-  opacity: 1;
-  transform: scaleY(0);
-  transform-origin: top center;
-  transition: transform 1.6s cubic-bezier(0.65, 0, 0.35, 1);
-}
-[appScrollReveal][data-reveal='line'].is-revealed {
-  transform: scaleY(1);
-}
-[appScrollReveal][data-reveal='pop'] {
-  opacity: 0;
-  transform: scale(0.4);
-  transition: opacity 0.5s ease-out, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-[appScrollReveal][data-reveal='pop'].is-revealed {
-  opacity: 1;
-  transform: scale(1);
+  animation: progress-grow 2.4s var(--ease-out) 0.15s forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [appScrollReveal],
-  .anim-fade-up {
-    opacity: 1 !important;
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
-  }
+  html { scroll-behavior: auto; }
+  .slap-in, .sticker, .sticker:hover, .group:hover .sticker,
+  .enter-drop, .leave-lift, .enter-rise, .leave-fade,
+  .skeleton, .success-pop * { animation: none !important; }
+  .slap-in { opacity: 1; }
+  .btn:hover, .btn:active, .press:active { transform: none; }
+  .blob-a, .blob-b, .blob-c { transition: none; }
 }
