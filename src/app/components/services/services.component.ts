@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { StickerComponent, StickerName } from '../../ui/sticker.component';
 
 export type ServiceKey =
   | 'plomberie'
@@ -15,14 +16,13 @@ type Service = {
   description: string;
   count: string;
   image: string;
-  tagColor: string;
-  dotColor: string;
+  sticker: StickerName;
 };
 
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, StickerComponent],
   templateUrl: './services.component.html',
 })
 export class ServicesComponent {
@@ -30,56 +30,50 @@ export class ServicesComponent {
     {
       key: 'plomberie',
       title: 'Plomberie',
-      description: 'Fuites, installations, dépannage sanitaire 24/7.',
-      count: '420+ artisans',
+      description: 'Fuites, chauffe-eau, sanitaires et dépannage 7 jours sur 7.',
+      count: '420',
       image: '/img/service-plomberie.jpg',
-      tagColor: 'text-sky-300 bg-sky-500/15',
-      dotColor: 'bg-sky-400',
+      sticker: 'wrench',
     },
     {
       key: 'electricite',
       title: 'Électricité',
-      description: 'Mise aux normes et dépannage électrique.',
-      count: '380+ artisans',
+      description: 'Tableaux, prises, éclairage et mise aux normes.',
+      count: '380',
       image: '/img/service-electricite.jpg',
-      tagColor: 'text-amber-300 bg-amber-500/15',
-      dotColor: 'bg-amber-400',
+      sticker: 'bolt',
     },
     {
       key: 'menuiserie',
       title: 'Menuiserie',
-      description: 'Meubles sur mesure et pose de bois.',
-      count: '290+ artisans',
+      description: 'Placards, portes, cuisines et meubles sur mesure.',
+      count: '290',
       image: '/img/service-menuiserie.jpg',
-      tagColor: 'text-orange-300 bg-orange-500/15',
-      dotColor: 'bg-orange-400',
+      sticker: 'saw',
     },
     {
       key: 'peinture',
       title: 'Peinture',
-      description: 'Peinture intérieure, façades et décoration.',
-      count: '310+ artisans',
+      description: 'Murs intérieurs, façades, tadelakt et enduits décoratifs.',
+      count: '310',
       image: '/img/service-peinture.jpg',
-      tagColor: 'text-rose-300 bg-rose-500/15',
-      dotColor: 'bg-rose-400',
+      sticker: 'roller',
     },
     {
       key: 'maconnerie',
       title: 'Maçonnerie',
-      description: 'Construction, rénovation et extensions.',
-      count: '260+ artisans',
+      description: 'Murs, dalles, extensions et rénovation complète.',
+      count: '260',
       image: '/img/service-maconnerie.jpg',
-      tagColor: 'text-slate-300 bg-slate-500/15',
-      dotColor: 'bg-slate-300',
+      sticker: 'bricks',
     },
     {
       key: 'climatisation',
       title: 'Climatisation',
-      description: 'Installation et entretien de climatiseurs.',
-      count: '180+ artisans',
+      description: 'Pose, recharge et entretien de climatiseurs.',
+      count: '180',
       image: '/img/service-climatisation.jpg',
-      tagColor: 'text-emerald-300 bg-emerald-500/15',
-      dotColor: 'bg-emerald-400',
+      sticker: 'snow',
     },
   ];
 }

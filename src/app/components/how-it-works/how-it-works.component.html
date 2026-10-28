@@ -1,154 +1,50 @@
-<section class="relative bg-gray-bg py-20 lg:py-28 overflow-hidden">
-  <!-- Decorative blobs -->
-  <div
-    class="absolute top-20 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none"
-    aria-hidden="true"
-  ></div>
-  <div
-    class="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-secondary/10 blur-3xl pointer-events-none"
-    aria-hidden="true"
-  ></div>
-
-  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="max-w-2xl mx-auto text-center">
-      <span
-        class="inline-flex items-center gap-2 bg-secondary/10 text-secondary text-xs font-semibold tracking-wider uppercase px-4 py-1.5 rounded-full"
-      >
-        <span class="w-1.5 h-1.5 rounded-full bg-secondary anim-float"></span>
-        Comment ça marche
-      </span>
-      <h2 class="mt-4 font-heading text-heading text-3xl sm:text-4xl lg:text-5xl font-bold">
-        Votre projet réalisé
-        <span class="text-primary">en 4 étapes.</span>
-      </h2>
-      <p class="mt-4 text-text text-lg">
-        Simple, rapide et transparent — lancez votre projet sans tracas.
+<section class="bg-white py-20 lg:py-28">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+      <h2 class="text-5xl sm:text-6xl max-w-[14ch]">Quatre étapes, zéro prise de tête.</h2>
+      <p class="text-lg text-encre-soft max-w-[40ch] leading-relaxed">
+        Publier un projet est gratuit. Vous payez l'artisan seulement une fois le travail terminé.
       </p>
     </div>
 
-    <!-- Steps timeline -->
-    <div class="relative mt-20">
-      <!-- Vertical dashed line -->
-      <div
-        class="absolute left-6 lg:left-1/2 lg:-translate-x-px top-0 bottom-0 w-0.5 border-l-2 border-dashed border-primary/30"
-        aria-hidden="true"
-      ></div>
+    <div class="relative mt-16">
+      <!-- Dashed path linking the steps (desktop) -->
+      <svg class="hidden lg:block absolute left-0 right-0 top-7 w-full h-16 -z-0" viewBox="0 0 1200 64" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M40 32 C 190 -8, 260 72, 400 32 S 640 -8, 800 32 S 1040 72, 1160 32" fill="none" stroke="#22b07d" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round" />
+      </svg>
 
-      <div class="space-y-16 lg:space-y-24">
+      <ol class="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-14">
         @for (step of steps; track step.number; let i = $index) {
-          <div class="relative grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            <!-- Timeline dot -->
-            <div class="absolute left-6 lg:left-1/2 -translate-x-1/2 top-6 lg:top-1/2 lg:-translate-y-1/2 z-20">
-              <span class="relative flex w-5 h-5">
-                <span
-                  [class]="'absolute inset-0 rounded-full opacity-60 anim-ping-slow ' + step.dotColor"
-                ></span>
-                <span
-                  [class]="'relative w-5 h-5 rounded-full ring-4 ring-gray-bg ' + step.dotColor"
-                ></span>
-              </span>
-            </div>
-
-            <!-- Image card -->
-            <div class="pl-16 lg:pl-0" [class.lg:order-last]="i % 2 === 1">
-              <div class="relative group">
-                <!-- Number badge -->
-                <div
-                  class="absolute -top-5 -left-5 z-10 w-20 h-20 rounded-2xl bg-white shadow-xl flex items-center justify-center font-heading font-extrabold text-3xl text-heading rotate-[-6deg] group-hover:rotate-0 transition-transform duration-500"
-                >
-                  {{ step.number }}
-                  <span
-                    [class]="'absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full flex items-center justify-center text-white shadow-md ' + step.dotColor"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" [attr.d]="step.icon" />
-                    </svg>
-                  </span>
-                </div>
-
-                <!-- Image with overlay -->
-                <div
-                  class="relative h-64 lg:h-72 rounded-3xl bg-cover bg-center shadow-xl ring-1 ring-black/5 overflow-hidden group-hover:scale-[1.015] transition-transform duration-500"
-                  [style.background-image]="'url(' + step.image + ')'"
-                >
-                  <div
-                    class="absolute inset-0 bg-gradient-to-tr from-footer/60 via-transparent to-transparent"
-                    aria-hidden="true"
-                  ></div>
-                </div>
-
-                <!-- Decorative dots pattern -->
-                <div
-                  class="absolute -bottom-4 -right-4 -z-10 grid grid-cols-6 gap-1.5"
-                  aria-hidden="true"
-                >
-                  @for (_ of [1,2,3,4,5,6,7,8,9,10,11,12]; track $index) {
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary/40"></span>
-                  }
-                </div>
-              </div>
-            </div>
-
-            <!-- Content -->
-            <div class="pl-16 lg:pl-0">
-              <span
-                [class]="'inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ' + step.tagColor"
-              >
-                Étape {{ step.number }}
-              </span>
-              <h3 class="mt-4 font-heading text-heading text-2xl lg:text-3xl font-bold">
-                {{ step.title }}
-              </h3>
-              <p class="mt-3 text-text text-base lg:text-lg leading-relaxed max-w-lg">
-                {{ step.description }}
-              </p>
-            </div>
-          </div>
+          <li class="group">
+            <span
+              class="relative z-10 grid place-items-center w-14 h-14 rounded-full border-2 border-encre font-display font-extrabold text-3xl pt-1 shadow-[0_4px_0_var(--color-encre)]"
+              [class]="['bg-citron', 'bg-menthe', 'bg-argile', 'bg-citron'][i]"
+            >
+              {{ step.number }}
+            </span>
+            <div
+              class="mt-6 aspect-[4/3] bg-cover bg-center border-2 border-encre"
+              [class]="['blob-a', 'blob-c', 'blob-b', 'blob-a'][i]"
+              [style.background-image]="'url(' + step.image + ')'"
+              role="img"
+              [attr.aria-label]="step.alt"
+            ></div>
+            <h3 class="mt-6 text-2xl">{{ step.title }}</h3>
+            <p class="mt-2 text-encre-soft leading-relaxed">{{ step.description }}</p>
+          </li>
         }
-      </div>
+      </ol>
     </div>
 
     <!-- CTA band -->
-    <div
-      class="relative mt-20 bg-gradient-to-br from-footer via-dark to-footer rounded-3xl p-8 lg:p-12 overflow-hidden"
-    >
-      <div
-        class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-primary/20 blur-3xl"
-        aria-hidden="true"
-      ></div>
-      <div
-        class="absolute inset-0 opacity-[0.05]"
-        style="background-image: radial-gradient(white 1px, transparent 1px); background-size: 20px 20px;"
-        aria-hidden="true"
-      ></div>
-
-      <div class="relative flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div>
-          <h3 class="font-heading text-white text-2xl lg:text-3xl font-bold">
-            Prêt à démarrer votre projet ?
-          </h3>
-          <p class="mt-2 text-white/70">
-            Publiez votre demande gratuitement et recevez vos premiers devis en 24h.
-          </p>
-        </div>
-        <div class="flex flex-wrap gap-3 shrink-0">
-          <a
-            routerLink="/post-project"
-            class="group inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-6 py-3 rounded-full transition-colors"
-          >
-            Publier un projet
-            <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </a>
-          <a
-            routerLink="/register"
-            class="inline-flex items-center gap-2 border border-white/20 text-white hover:bg-white/5 font-semibold px-6 py-3 rounded-full transition-colors"
-          >
-            Devenir artisan
-          </a>
-        </div>
+    <div class="mt-20 rounded-[36px] bg-citron border-2 border-encre px-6 py-10 sm:px-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative overflow-hidden">
+      <div class="relative">
+        <h3 class="text-4xl sm:text-5xl">Prêt à lancer votre projet&nbsp;?</h3>
+        <p class="mt-3 text-lg text-encre/80">Les premiers devis arrivent en général sous 24 h.</p>
+      </div>
+      <div class="relative flex flex-col sm:flex-row gap-3">
+        <a routerLink="/post-project" class="btn btn-menthe">Publier mon projet gratuitement</a>
+        <a routerLink="/register" class="btn btn-white">Je suis artisan</a>
       </div>
     </div>
   </div>
