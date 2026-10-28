@@ -17,11 +17,12 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render header and hero', () => {
+  it('should render header, router outlet and footer', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('app-header')).toBeTruthy();
-    expect(compiled.querySelector('app-hero')).toBeTruthy();
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+    expect(compiled.querySelector('app-footer')).toBeTruthy();
   });
 });
