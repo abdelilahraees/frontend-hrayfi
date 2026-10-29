@@ -3,7 +3,11 @@
     <!-- Boîte de réception -->
     <aside class="border-r-2 border-encre/10 flex-col min-h-0 lg:!flex" [class.hidden]="otherId() !== null" [class.flex]="otherId() === null">
       <div class="px-5 pt-5 pb-3">
-        <h1 class="text-4xl">Messages</h1>
+        <a [routerLink]="auth.homeUrl()" class="inline-flex items-center gap-1.5 text-sm font-semibold text-encre-soft hover:text-encre">
+          <svg viewBox="0 0 20 20" class="size-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12.5 15 7.5 10l5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Retour à mon espace
+        </a>
+        <h1 class="mt-2 text-4xl">Messages</h1>
       </div>
       <ul class="flex-1 overflow-y-auto">
         @let list = conversations();
