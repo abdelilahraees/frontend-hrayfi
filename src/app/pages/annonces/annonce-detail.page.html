@@ -1,0 +1,186 @@
+@let a = annonce();
+
+@if (notFound()) {
+  <section class="max-w-3xl mx-auto px-4 py-24 text-center">
+    <h1 class="text-5xl">Annonce introuvable</h1>
+    <p class="mt-4 text-lg text-encre-soft">Elle a peut-être été retirée par l'artisan.</p>
+    <a routerLink="/annonces" class="btn btn-citron mt-8">Voir les annonces</a>
+  </section>
+} @else if (!a) {
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid lg:grid-cols-12 gap-10" aria-busy="true">
+    <div class="lg:col-span-7 skeleton !rounded-[28px] aspect-[4/3]"></div>
+    <div class="lg:col-span-5 space-y-4"><div class="skeleton h-12 w-3/4"></div><div class="skeleton h-6 w-1/2"></div><div class="skeleton h-32 !rounded-3xl"></div></div>
+  </section>
+} @else {
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <nav class="text-sm text-encre-soft" aria-label="Fil d'Ariane">
+      <a routerLink="/annonces" class="hover:text-encre">Annonces</a>
+      <span class="mx-1.5">/</span>
+      <a routerLink="/annonces" [queryParams]="{ metier: a.metier }" class="hover:text-encre">{{ a.metier }}</a>
+    </nav>
+
+    <div class="mt-5 grid lg:grid-cols-12 gap-10">
+      <!-- Galerie + description -->
+      <div class="lg:col-span-7">
+        <div class="relative overflow-hidden rounded-[28px] border-2 border-encre bg-menthe-50 aspect-[4/3]">
+          <img [src]="images()[imageIndex()] || images()[0] || '/img/hero-main.jpg'" [alt]="a.titre" class="h-full w-full object-cover" />
+          @if (images().length > 1) {
+            <button type="button" aria-label="Photo précédente" (click)="imageIndex.set((imageIndex() - 1 + images().length) % images().length)"
+                    class="press absolute left-3 top-1/2 -translate-y-1/2 grid place-items-center w-11 h-11 rounded-full border-2 border-encre bg-white">‹</button>
+            <button type="button" aria-label="Photo suivante" (click)="imageIndex.set((imageIndex() + 1) % images().length)"
+                    class="press absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center w-11 h-11 rounded-full border-2 border-encre bg-white">›</button>
+          }
+        </div>
+        @if (images().length > 1) {
+          <div class="mt-3 flex gap-3 overflow-x-auto pb-1">
+            @for (src of images(); track $index) {
+              <button type="button" (click)="imageIndex.set($index)" [attr.aria-label]="'Photo ' + ($index + 1)"
+                      class="shrink-0 w-24 aspect-[4/3] overflow-hidden rounded-2xl border-2"
+                      [class.border-encre]="$index === imageIndex()" [class.border-transparent]="$index !== imageIndex()">
+                <img [src]="src" alt="" class="h-full w-full object-cover" />
+              </button>
+            }
+          </div>
+        }
+
+        <h2 class="mt-10 text-3xl">Description</h2>
+        <p class="mt-3 text-lg leading-relaxed whitespace-pre-line">{{ a.description }}</p>
+      </div>
+
+      <!-- Infos + actions -->
+      <aside class="lg:col-span-5">
+        <div class="lg:sticky lg:top-28 space-y-6">
+          <div>
+            <span class="inline-block rounded-full border-2 border-encre bg-citron px-3 py-1 text-sm font-bold">{{ a.metier }}</span>
+            @if (!a.active) {
+              <span class="ml-2 inline-block rounded-full border-2 border-encre px-3 py-1 text-sm font-bold">Masquée</span>
+            }
+            <h1 class="mt-4 text-4xl sm:text-5xl">{{ a.titre }}</h1>
+            <app-stars class="mt-4" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="20" />
+            @if (a.ville) { <p class="mt-2 text-encre-soft">{{ a.ville }}</p> }
+            <p class="mt-4 font-display text-3xl font-bold text-menthe-deep">{{ a | price }}</p>
+            <p class="text-sm text-encre-soft">Prix indicatif, à négocier avec l'artisan.</p>
+          </div>
+
+          @if (isOwner()) {
+            <div class="rounded-[28px] border-2 border-encre bg-menthe-50 p-5">
+              <p class="font-semibold">C'est votre annonce.</p>
+              <a [routerLink]="['/espace/artisan/annonces', a.id, 'modifier']" class="btn btn-citron w-full mt-4">Modifier l'annonce</a>
+            </div>
+          } @else if (auth.role() !== 'ARTISAN') {
+            <div class="flex flex-col gap-3">
+              <button type="button" class="btn btn-menthe w-full" (click)="contact()">Discuter et négocier le prix</button>
+              <button type="button" class="btn btn-white w-full" (click)="openBooking()">Demander une intervention</button>
+            </div>
+          }
+
+          @if (bookingOpen()) {
+            <form (ngSubmit)="submitBooking()" class="enter-rise rounded-[28px] border-2 border-encre bg-white p-5 space-y-4">
+              @if (bookingDone()) {
+                <p class="font-display text-2xl font-bold">Demande envoyée.</p>
+                <p class="text-encre-soft">L'artisan va l'accepter ou la refuser ; suivez-la depuis votre espace.</p>
+                <div class="flex gap-3">
+                  <a routerLink="/espace/client" class="btn btn-citron !text-base">Mon espace</a>
+                  <button type="button" class="btn btn-white !text-base" (click)="bookingOpen.set(false)">Fermer</button>
+                </div>
+              } @else if (!isClient()) {
+                <p>Seuls les comptes particuliers peuvent demander une intervention.</p>
+              } @else {
+                <p class="font-display text-2xl font-bold">Votre demande</p>
+                <label class="block">
+                  <span class="font-semibold">Votre besoin</span>
+                  <textarea name="desc" rows="3" [(ngModel)]="bookingDescription" class="field resize-y" placeholder="Ex. fuite sous l'évier de la cuisine"></textarea>
+                </label>
+                <label class="block">
+                  <span class="font-semibold">Date souhaitée</span>
+                  <input type="datetime-local" name="date" [min]="minDate" [(ngModel)]="bookingDate" class="field" />
+                </label>
+                <label class="block">
+                  <span class="font-semibold">Prix convenu <span class="font-normal text-encre-soft">(MAD, si déjà négocié)</span></span>
+                  <input type="number" name="prix" min="0" [(ngModel)]="bookingPrix" class="field" />
+                </label>
+                @if (bookingError()) { <p role="alert" class="text-[#b42323] text-sm">{{ bookingError() }}</p> }
+                <div class="flex gap-3">
+                  <button type="submit" class="btn btn-menthe !text-base" [disabled]="bookingSending()">{{ bookingSending() ? 'Envoi…' : 'Envoyer la demande' }}</button>
+                  <button type="button" class="btn btn-white !text-base" (click)="bookingOpen.set(false)">Annuler</button>
+                </div>
+              }
+            </form>
+          }
+
+          @if (artisan(); as ar) {
+            <a [routerLink]="['/artisans', ar.id]" class="flex items-center gap-4 rounded-[28px] border-2 border-encre/15 p-5 hover:border-encre transition-colors">
+              <app-avatar [name]="ar.prenom + ' ' + ar.nom" [size]="56" />
+              <span class="flex-1">
+                <span class="block font-display text-xl font-bold">{{ ar.prenom }} {{ ar.nom }}</span>
+                <span class="block text-sm text-encre-soft">{{ ar.metier }}@if (ar.ville) { · {{ ar.ville }} }</span>
+                <app-stars class="mt-1" [value]="ar.noteMoyenne" [count]="ar.nbAvis" [size]="14" />
+              </span>
+              <span class="text-sm font-semibold text-menthe-deep">Profil ›</span>
+            </a>
+          }
+        </div>
+      </aside>
+    </div>
+
+    <!-- Avis -->
+    <div class="mt-16 grid lg:grid-cols-12 gap-10">
+      <div class="lg:col-span-7">
+        <h2 class="text-4xl">Avis des clients <span class="text-encre-soft text-2xl">({{ avisTotal() }})</span></h2>
+
+        @if (isClient() && (!monAvis() || avisEditing())) {
+          <form (ngSubmit)="submitAvis()" class="mt-6 rounded-[28px] border-2 border-encre bg-citron-50 p-6 space-y-4">
+            <p class="font-display text-2xl font-bold">{{ monAvis() ? 'Modifier mon avis' : 'Donner mon avis' }}</p>
+            <app-star-input [(value)]="note" />
+            <label class="block">
+              <span class="sr-only">Commentaire</span>
+              <textarea name="commentaire" rows="3" maxlength="2000" [(ngModel)]="commentaire" class="field resize-y bg-white"
+                        placeholder="Qualité du travail, ponctualité, respect du prix…"></textarea>
+            </label>
+            @if (avisError()) { <p role="alert" class="text-[#b42323] text-sm">{{ avisError() }}</p> }
+            <div class="flex gap-3">
+              <button type="submit" class="btn btn-menthe !text-base" [disabled]="avisSending()">{{ avisSending() ? 'Publication…' : 'Publier' }}</button>
+              @if (avisEditing()) {
+                <button type="button" class="btn btn-white !text-base" (click)="avisEditing.set(false)">Annuler</button>
+              }
+            </div>
+          </form>
+        } @else if (!auth.isLoggedIn()) {
+          <p class="mt-6 rounded-[28px] bg-menthe-50 p-5">
+            <a routerLink="/login" [queryParams]="{ redirect: '/annonces/' + a.id }" class="font-semibold text-menthe-deep underline underline-offset-4">Connectez-vous</a>
+            pour noter et commenter cette annonce.
+          </p>
+        }
+
+        <ul class="mt-8 space-y-5">
+          @for (r of avis(); track r.id) {
+            <li class="rounded-[28px] border-2 border-encre/10 p-5">
+              <div class="flex items-start gap-4">
+                <app-avatar [name]="r.clientNomComplet" [size]="44" />
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span class="font-semibold">{{ r.clientNomComplet }}</span>
+                    <app-stars [value]="r.note" [showValue]="false" [size]="15" />
+                    <span class="text-sm text-encre-soft">{{ r.createdAt | date: 'd MMMM y' }}</span>
+                  </div>
+                  @if (r.commentaire) { <p class="mt-2 leading-relaxed whitespace-pre-line">{{ r.commentaire }}</p> }
+                  @if (r.clientId === auth.userId()) {
+                    <div class="mt-3 flex gap-4 text-sm font-semibold">
+                      <button type="button" class="text-menthe-deep" (click)="editAvis()">Modifier</button>
+                      <button type="button" class="text-[#b42323]" (click)="deleteAvis(r)">Supprimer</button>
+                    </div>
+                  }
+                </div>
+              </div>
+            </li>
+          } @empty {
+            <li class="text-encre-soft">Pas encore d'avis. Soyez le premier à partager votre expérience.</li>
+          }
+        </ul>
+        @if (!avisLast()) {
+          <button type="button" class="btn btn-white mt-6" (click)="loadAvis(avisPage() + 1)">Voir plus d'avis</button>
+        }
+      </div>
+    </div>
+  </section>
+}

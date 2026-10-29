@@ -1,0 +1,124 @@
+@let s = state();
+
+<section class="bg-menthe-50 border-b-2 border-encre/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+    <h1 class="text-5xl sm:text-6xl">
+      @if (metierActif()) { {{ metierActif() }} } @else { Tous les services }
+    </h1>
+    <p class="mt-3 text-lg text-encre-soft">Comparez les annonces des artisans, leurs photos, leurs prix et les avis des clients.</p>
+
+    <form class="mt-7 max-w-3xl" role="search" (ngSubmit)="submitSearch()">
+      <div class="bg-white rounded-[28px] sm:rounded-full border-2 border-encre p-2 flex flex-col sm:flex-row sm:items-center gap-1 shadow-[0_6px_0_var(--color-encre)]">
+        <label class="flex-1 flex items-center gap-3 pl-4 pr-2 py-2 cursor-text">
+          <svg class="w-5 h-5 shrink-0 text-encre-soft" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          <span class="sr-only">Mot-clé</span>
+          <input type="search" name="q" [(ngModel)]="qDraft" placeholder="Ex. fuite, tableau électrique, tadelakt"
+                 class="w-full bg-transparent text-base sm:text-[17px] placeholder:text-encre-soft/70 focus:outline-none" />
+        </label>
+        <span class="hidden sm:block w-0.5 h-8 bg-encre/10 rounded-full"></span>
+        <label class="sm:w-44 flex items-center gap-3 pl-4 pr-2 py-2 border-t-2 sm:border-t-0 border-encre/10 cursor-text">
+          <span class="sr-only">Ville</span>
+          <input name="ville" [(ngModel)]="villeDraft" list="villes-list" placeholder="Ville"
+                 class="w-full bg-transparent text-base sm:text-[17px] placeholder:text-encre-soft/70 focus:outline-none" />
+          <datalist id="villes-list">
+            @for (v of villes; track v) { <option [value]="v"></option> }
+          </datalist>
+        </label>
+        <button type="submit" class="btn btn-menthe !shadow-none hover:!translate-y-0 active:!translate-y-0 active:scale-95">Rechercher</button>
+      </div>
+    </form>
+
+    <!-- Métiers -->
+    <div class="mt-7 flex flex-wrap gap-2" role="group" aria-label="Filtrer par métier">
+      <button type="button" class="chip" [class.!border-encre]="!metierActif()" [class.!bg-menthe]="!metierActif()"
+              [attr.aria-pressed]="!metierActif()" (click)="apply({ metier: null })">Tous</button>
+      @for (m of metiers(); track m.metier) {
+        <button type="button" class="chip" [class.!border-encre]="metierActif() === m.metier" [class.!bg-menthe]="metierActif() === m.metier"
+                [attr.aria-pressed]="metierActif() === m.metier" (click)="apply({ metier: m.metier })">
+          {{ m.metier }} <span class="text-encre-soft text-sm">{{ m.nbAnnonces }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid lg:grid-cols-[260px_1fr] gap-10">
+  <!-- Filtres -->
+  <aside>
+    <button type="button" class="lg:hidden btn btn-white w-full" (click)="filtersOpen.set(!filtersOpen())" [attr.aria-expanded]="filtersOpen()">
+      Filtres @if (activeCount()) { ({{ activeCount() }}) }
+    </button>
+    <div class="mt-4 lg:mt-0 space-y-8 lg:!block" [class.hidden]="!filtersOpen()">
+      <fieldset>
+        <legend class="font-display font-bold text-xl">Note minimum</legend>
+        <div class="mt-3 flex flex-wrap lg:flex-col gap-2">
+          @for (n of notes; track n.value) {
+            <label class="chip">
+              <input type="radio" name="note" class="sr-only" [checked]="noteActive() === n.value" (change)="apply({ noteMin: n.value || null })" />
+              {{ n.label }}
+            </label>
+          }
+        </div>
+      </fieldset>
+
+      <form (ngSubmit)="submitSearch()">
+        <label class="block">
+          <span class="font-display font-bold text-xl">Budget maximum</span>
+          <span class="mt-1 block text-sm text-encre-soft">Annonces dont le prix de départ tient dans votre budget.</span>
+          <div class="flex items-center gap-2">
+            <input type="number" name="prixMax" min="0" step="50" [(ngModel)]="prixDraft" placeholder="Ex. 500" class="field" />
+            <span class="mt-2 font-semibold">MAD</span>
+          </div>
+        </label>
+        <button type="submit" class="btn btn-white !py-2 !px-4 !text-base mt-3">Appliquer</button>
+      </form>
+
+      <label class="block">
+        <span class="font-display font-bold text-xl">Trier par</span>
+        <select class="field" [ngModel]="sortActif()" (ngModelChange)="apply({ sort: $event })" name="sort">
+          @for (o of sorts; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+        </select>
+      </label>
+
+      @if (activeCount()) {
+        <button type="button" (click)="reset()" class="font-semibold text-menthe-deep underline underline-offset-4">Effacer les filtres</button>
+      }
+    </div>
+  </aside>
+
+  <!-- Résultats -->
+  <div>
+    @if (s.loading) {
+      <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6" aria-busy="true">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="rounded-[28px] border-2 border-encre/10 overflow-hidden">
+            <div class="skeleton !rounded-none aspect-[4/3]"></div>
+            <div class="p-5 space-y-3"><div class="skeleton h-6 w-3/4"></div><div class="skeleton h-4 w-1/2"></div></div>
+          </div>
+        }
+      </div>
+    } @else if (s.error) {
+      <p class="rounded-3xl border-2 border-[#d23c3c]/30 bg-argile-50 p-6">Impossible de charger les annonces. Vérifiez que le serveur est démarré.</p>
+    } @else if (s.page) {
+      <p class="mb-5 text-encre-soft" aria-live="polite">
+        <strong class="text-encre">{{ s.page.totalElements }}</strong> annonce{{ s.page.totalElements > 1 ? 's' : '' }}
+      </p>
+      @if (s.page.content.length) {
+        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          @for (a of s.page.content; track a.id) {
+            <app-annonce-card [annonce]="a" class="enter-rise" />
+          }
+        </div>
+        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" (change)="goToPage($event)" />
+      } @else {
+        <div class="rounded-[28px] border-2 border-dashed border-encre/20 p-10 text-center">
+          <p class="font-display text-2xl font-bold">Aucune annonce ne correspond.</p>
+          <p class="mt-2 text-encre-soft">Essayez un autre mot-clé, une autre ville ou retirez un filtre.</p>
+          <button type="button" (click)="reset()" class="btn btn-citron mt-6">Voir toutes les annonces</button>
+        </div>
+      }
+    }
+  </div>
+</section>

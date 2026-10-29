@@ -1,0 +1,99 @@
+<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <a routerLink="/espace/artisan" class="text-sm font-semibold text-encre-soft hover:text-encre">‹ Retour à mon espace</a>
+  <h1 class="mt-3 text-5xl">{{ isEdit() ? 'Modifier l\'annonce' : 'Publier une annonce' }}</h1>
+  <p class="mt-3 text-lg text-encre-soft">Décrivez un service que vous proposez. Les annonces avec photos reçoivent bien plus de demandes.</p>
+
+  @if (!loaded()) {
+    <div class="mt-10 space-y-4" aria-busy="true"><div class="skeleton h-14"></div><div class="skeleton h-40 !rounded-3xl"></div></div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="mt-10 space-y-8" novalidate>
+      <label class="block">
+        <span class="font-semibold">Titre</span>
+        <input formControlName="titre" maxlength="150" class="field" placeholder="Ex. Réparation de fuites et débouchage rapide"
+               [attr.aria-invalid]="invalid('titre')" />
+        @if (invalid('titre')) { <span class="mt-1.5 block text-sm text-[#b42323]">Entre 5 et 150 caractères.</span> }
+      </label>
+
+      <div class="grid sm:grid-cols-2 gap-5">
+        <label class="block">
+          <span class="font-semibold">Métier</span>
+          <input formControlName="metier" list="metiers-list" class="field" [attr.aria-invalid]="invalid('metier')" />
+          <datalist id="metiers-list">@for (m of metiers; track m) { <option [value]="m"></option> }</datalist>
+        </label>
+        <label class="block">
+          <span class="font-semibold">Ville d'intervention</span>
+          <input formControlName="ville" list="villes-list" class="field" />
+          <datalist id="villes-list">@for (v of villes; track v) { <option [value]="v"></option> }</datalist>
+        </label>
+      </div>
+
+      <label class="block">
+        <span class="font-semibold">Description</span>
+        <textarea formControlName="description" rows="7" maxlength="5000" class="field resize-y"
+                  placeholder="Ce que comprend le service, vos délais, votre matériel, votre expérience…"
+                  [attr.aria-invalid]="invalid('description')"></textarea>
+        <span class="mt-1.5 block text-sm" [class.text-[#b42323]]="invalid('description')" [class.text-encre-soft]="!invalid('description')">
+          20 caractères minimum · {{ form.controls.description.value.length }}/5000
+        </span>
+      </label>
+
+      <fieldset>
+        <legend class="font-semibold">Fourchette de prix <span class="font-normal text-encre-soft">(MAD, indicatif — le client pourra négocier)</span></legend>
+        <div class="mt-2 grid grid-cols-2 gap-5 max-w-md">
+          <label><span class="text-sm text-encre-soft">À partir de</span>
+            <input type="number" min="0" step="10" formControlName="prixMin" class="field !mt-1" /></label>
+          <label><span class="text-sm text-encre-soft">Jusqu'à</span>
+            <input type="number" min="0" step="10" formControlName="prixMax" class="field !mt-1" /></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="font-semibold">Photos <span class="font-normal text-encre-soft">({{ totalImages() }}/{{ maxImages }} · JPEG, PNG, WEBP · 5 Mo max)</span></legend>
+
+        <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          @for (img of existing(); track img.id; let first = $first) {
+            <div class="relative aspect-[4/3] overflow-hidden rounded-2xl border-2 border-encre/15">
+              <img [src]="mediaUrl(img.url)" alt="" class="h-full w-full object-cover" />
+              @if (first) { <span class="absolute left-2 top-2 rounded-full bg-citron border-2 border-encre px-2 text-xs font-bold">Couverture</span> }
+              <button type="button" (click)="removeExisting(img)" aria-label="Retirer la photo"
+                      class="press absolute right-2 top-2 grid place-items-center w-8 h-8 rounded-full bg-white border-2 border-encre font-bold">×</button>
+            </div>
+          }
+          @for (img of added(); track img.preview; let i = $index) {
+            <div class="relative aspect-[4/3] overflow-hidden rounded-2xl border-2 border-menthe">
+              <img [src]="img.preview" alt="" class="h-full w-full object-cover" />
+              @if (!existing().length && i === 0) { <span class="absolute left-2 top-2 rounded-full bg-citron border-2 border-encre px-2 text-xs font-bold">Couverture</span> }
+              <span class="absolute left-2 bottom-2 rounded-full bg-menthe px-2 text-xs font-bold">Nouvelle</span>
+              <button type="button" (click)="removeAdded(img)" aria-label="Retirer la photo"
+                      class="press absolute right-2 top-2 grid place-items-center w-8 h-8 rounded-full bg-white border-2 border-encre font-bold">×</button>
+            </div>
+          }
+          @if (totalImages() < maxImages) {
+            <label class="relative aspect-[4/3] grid place-items-center rounded-2xl border-2 border-dashed cursor-pointer text-center p-3 transition-colors"
+                   [class.border-menthe]="dragging()" [class.bg-menthe-50]="dragging()" [class.border-encre/25]="!dragging()"
+                   (dragover)="$event.preventDefault(); dragging.set(true)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="sr-only"
+                     (change)="onFiles($any($event.target).files); $any($event.target).value = ''" />
+              <span>
+                <span class="block font-display text-3xl leading-none">+</span>
+                <span class="block mt-1 text-sm font-semibold">Ajouter des photos</span>
+              </span>
+            </label>
+          }
+        </div>
+        @if (imageError()) { <p role="alert" class="mt-2 text-sm text-[#b42323]">{{ imageError() }}</p> }
+      </fieldset>
+
+      @if (error()) {
+        <p role="alert" class="rounded-2xl border-2 border-[#d23c3c]/30 bg-argile-50 px-4 py-3">{{ error() }}</p>
+      }
+
+      <div class="flex flex-wrap gap-3">
+        <button type="submit" class="btn btn-menthe" [disabled]="saving()">
+          {{ saving() ? 'Enregistrement…' : (isEdit() ? 'Enregistrer les modifications' : 'Publier l\'annonce') }}
+        </button>
+        <a routerLink="/espace/artisan" class="btn btn-white">Annuler</a>
+      </div>
+    </form>
+  }
+</section>
