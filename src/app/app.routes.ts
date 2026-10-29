@@ -58,6 +58,18 @@ export const routes: Routes = [
     title: 'Inscription — Hrayfi',
   },
   {
+    path: 'espace/client',
+    canActivate: [roleGuard('CLIENT')],
+    loadComponent: () => import('./pages/espace/client-dashboard.page').then((m) => m.ClientDashboardPage),
+    title: 'Mon espace — Hrayfi',
+  },
+  {
+    path: 'espace/profil',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/espace/profil.page').then((m) => m.ProfilPage),
+    title: 'Mon profil — Hrayfi',
+  },
+  {
     path: 'espace/artisan',
     canActivate: [roleGuard('ARTISAN')],
     loadComponent: () => import('./pages/espace/artisan-dashboard.page').then((m) => m.ArtisanDashboardPage),
