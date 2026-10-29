@@ -1,137 +1,235 @@
 @let s = stats();
 @let u = auth.user();
 
-<section class="bg-menthe-50 border-b-2 border-encre/10">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-      <div>
-        <p class="font-semibold text-menthe-deep">Espace artisan</p>
-        <h1 class="mt-1 text-5xl sm:text-6xl">Bonjour {{ u?.prenom }}</h1>
-        @if (u?.metier) { <p class="mt-2 text-lg text-encre-soft">{{ u?.metier }}@if (u?.ville) { · {{ u?.ville }} }</p> }
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <a routerLink="/espace/profil" class="btn btn-white">Mon profil</a>
-        <a routerLink="/espace/artisan/annonces/nouvelle" class="btn btn-citron">Publier une annonce</a>
-      </div>
+<app-dashboard-shell [name]="(u?.prenom ?? '') + ' ' + (u?.nom ?? '')" [subtitle]="u?.metier ?? 'Artisan'" [items]="nav()">
+  <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div>
+      <p class="text-sm text-encre-soft first-letter:uppercase">{{ today | date: 'EEEE d MMMM y' }}</p>
+      <h1 class="mt-1 text-3xl sm:text-4xl">
+        @switch (ongletActif()) {
+          @case ('demandes') { Demandes reçues }
+          @case ('annonces') { Mes annonces }
+          @default { Bonjour {{ u?.prenom }} }
+        }
+      </h1>
     </div>
-
-    <div class="mt-9 grid grid-cols-2 lg:grid-cols-5 gap-4">
-      <app-stat-tile label="Demandes en attente" [value]="s?.demandesEnAttente ?? '–'" tone="bg-citron" />
-      <app-stat-tile label="Interventions acceptées" [value]="s?.demandesAcceptees ?? '–'" />
-      <app-stat-tile label="Chiffre d'affaires du mois" [value]="s ? (s.chiffreAffairesCeMois | number: '1.0-0') + ' MAD' : '–'"
-                     [hint]="s ? s.demandesTermineesCeMois + ' intervention(s) terminée(s)' : ''" />
-      <app-stat-tile label="Note de mes annonces" [value]="s ? (s.nbAvisAnnonces ? (s.noteMoyenneAnnonces | number: '1.1-1') + ' / 5' : '–') : '–'"
-                     [hint]="s ? s.nbAvisAnnonces + ' avis' : ''" />
-      <app-stat-tile label="Annonces en ligne" [value]="s ? s.nbAnnoncesActives + ' / ' + s.nbAnnonces : '–'"
-                     [hint]="s ? 'Taux d\'acceptation ' + (s.tauxAcceptation * 100 | number: '1.0-0') + ' %' : ''" />
-    </div>
-  </div>
-</section>
-
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-  <div class="flex gap-2 border-b-2 border-encre/10" role="tablist">
-    <button type="button" role="tab" [attr.aria-selected]="ongletActif() === 'annonces'" (click)="setOnglet('annonces')"
-            class="px-5 py-3 -mb-0.5 font-display text-xl font-bold border-b-4"
-            [class.border-menthe]="ongletActif() === 'annonces'" [class.border-transparent]="ongletActif() !== 'annonces'">
-      Mes annonces
-    </button>
-    <button type="button" role="tab" [attr.aria-selected]="ongletActif() === 'demandes'" (click)="setOnglet('demandes')"
-            class="px-5 py-3 -mb-0.5 font-display text-xl font-bold border-b-4"
-            [class.border-menthe]="ongletActif() === 'demandes'" [class.border-transparent]="ongletActif() !== 'demandes'">
-      Demandes reçues
-      @if (s?.demandesEnAttente) {
-        <span class="ml-1 inline-grid place-items-center min-w-6 h-6 px-1.5 rounded-full bg-citron border-2 border-encre text-xs align-middle">{{ s?.demandesEnAttente }}</span>
-      }
-    </button>
-  </div>
+    <a routerLink="/espace/artisan/annonces/nouvelle" class="dash-btn dash-btn-primary !px-4 !py-2.5">Publier une annonce</a>
+  </header>
 
   @if (error()) {
-    <p role="alert" class="mt-6 rounded-2xl border-2 border-[#d23c3c]/30 bg-argile-50 px-4 py-3">{{ error() }}</p>
+    <p role="alert" class="mt-6 rounded-xl border border-[#d23c3c]/30 bg-argile-50 px-4 py-3 text-sm">{{ error() }}</p>
   }
 
-  @if (ongletActif() === 'annonces') {
-    @let list = annonces();
-    @if (list === null) {
-      <div class="mt-8 space-y-4" aria-busy="true">@for (i of [1, 2]; track i) { <div class="skeleton h-28 !rounded-[28px]"></div> }</div>
-    } @else if (!list.length) {
-      <div class="mt-8 rounded-[28px] border-2 border-dashed border-encre/20 p-10 text-center">
-        <p class="font-display text-2xl font-bold">Vous n'avez pas encore d'annonce.</p>
-        <p class="mt-2 text-encre-soft">Présentez un service avec des photos de vos réalisations : c'est ce que les clients regardent en premier.</p>
-        <a routerLink="/espace/artisan/annonces/nouvelle" class="btn btn-citron mt-6">Publier ma première annonce</a>
+  @switch (ongletActif()) {
+    <!-- ============ Vue d'ensemble ============ -->
+    @case ('apercu') {
+      <div class="dash-panel mt-6 overflow-hidden grid grid-cols-2 lg:grid-cols-4 gap-px !bg-encre/10 [&>*]:bg-white">
+        <app-stat-tile label="Chiffre d'affaires du mois" [value]="s ? (s.chiffreAffairesCeMois | number: '1.0-0') + ' MAD' : '–'"
+                       [hint]="s ? s.demandesTermineesCeMois + ' intervention(s) terminée(s)' : ''" />
+        <app-stat-tile label="Demandes en attente" [value]="s?.demandesEnAttente ?? '–'" [tone]="s?.demandesEnAttente ? 'text-[#a37b00]' : 'text-encre'"
+                       hint="À accepter ou refuser" />
+        <app-stat-tile label="Taux d'acceptation" [value]="s ? (s.tauxAcceptation * 100 | number: '1.0-0') + ' %' : '–'"
+                       [hint]="s ? s.demandesAcceptees + ' intervention(s) prévue(s)' : ''" />
+        <app-stat-tile label="Note de mes annonces" [value]="s ? (s.nbAvisAnnonces ? (s.noteMoyenneAnnonces | number: '1.1-1') + ' / 5' : '–') : '–'"
+                       [hint]="s ? s.nbAvisAnnonces + ' avis · ' + s.nbAnnoncesActives + ' annonce(s) en ligne' : ''" />
       </div>
-    } @else {
-      <ul class="mt-8 space-y-4">
-        @for (a of list; track a.id) {
-          <li class="flex flex-col sm:flex-row gap-5 rounded-[28px] border-2 border-encre/15 p-4 sm:items-center" [class.opacity-70]="!a.active">
-            <img [src]="mediaUrl(a.images[0]?.url)" alt="" class="w-full sm:w-36 aspect-[4/3] rounded-2xl object-cover border-2 border-encre/10" />
-            <div class="flex-1 min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <a [routerLink]="['/annonces', a.id]" class="font-display text-2xl font-bold hover:underline">{{ a.titre }}</a>
-                @if (!a.active) { <span class="rounded-full border-2 border-encre px-2.5 py-0.5 text-xs font-bold">Masquée</span> }
-              </div>
-              <p class="text-sm text-encre-soft">{{ a.metier }}@if (a.ville) { · {{ a.ville }} } · {{ a.images.length }} photo(s) · {{ a | price }}</p>
-              <app-stars class="mt-2" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="14" />
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <a [routerLink]="['/espace/artisan/annonces', a.id, 'modifier']" class="btn btn-white !py-2 !px-4 !text-base">Modifier</a>
-              <button type="button" class="btn btn-white !py-2 !px-4 !text-base" [disabled]="busyId() === a.id" (click)="toggle(a)">
-                {{ a.active ? 'Masquer' : 'Remettre en ligne' }}
-              </button>
-              <button type="button" class="press rounded-full px-4 py-2 font-semibold text-[#b42323] hover:bg-argile-50" [disabled]="busyId() === a.id" (click)="remove(a)">Supprimer</button>
-            </div>
-          </li>
-        }
-      </ul>
-    }
-  } @else {
-    @let list = demandes();
-    @if (list === null) {
-      <div class="mt-8 space-y-4" aria-busy="true">@for (i of [1, 2]; track i) { <div class="skeleton h-28 !rounded-[28px]"></div> }</div>
-    } @else if (!list.length) {
-      <p class="mt-8 rounded-[28px] border-2 border-dashed border-encre/20 p-10 text-center text-encre-soft">Aucune demande pour le moment. Elles apparaîtront ici dès qu'un client vous sollicite.</p>
-    } @else {
-      <ul class="mt-8 space-y-4">
-        @for (d of list; track d.id) {
-          <li class="rounded-[28px] border-2 border-encre/15 p-5">
-            <div class="flex flex-wrap items-center gap-3">
-              <app-statut-badge [statut]="d.statut" />
-              <span class="font-display text-xl font-bold">{{ d.clientNomComplet }}</span>
-              <span class="text-sm text-encre-soft">pour le {{ d.dateIntervention | date: "EEEE d MMMM 'à' HH:mm" }}</span>
-            </div>
-            @if (d.annonceTitre) {
-              <a [routerLink]="['/annonces', d.annonceId]" class="mt-2 inline-block text-sm font-semibold text-menthe-deep">{{ d.annonceTitre }}</a>
-            }
-            <p class="mt-2">{{ d.description }}</p>
-            <p class="mt-2 text-sm text-encre-soft">
-              @if (d.prixConvenu != null) { Prix convenu : <strong class="text-encre">{{ d.prixConvenu | price }}</strong> }
-              @if (d.prixFinal != null) { · Montant final : <strong class="text-encre">{{ d.prixFinal | price }}</strong> }
-            </p>
 
-            <div class="mt-4 flex flex-wrap items-center gap-2">
-              <a [routerLink]="['/messages', d.clientId]" [queryParams]="{ nom: d.clientNomComplet, annonce: d.annonceId }" class="btn btn-white !py-2 !px-4 !text-base">Message</a>
-              @if (d.statut === 'EN_ATTENTE') {
-                <button type="button" class="btn btn-menthe !py-2 !px-4 !text-base" [disabled]="busyId() === d.id" (click)="accept(d)">Accepter</button>
-                <button type="button" class="press rounded-full px-4 py-2 font-semibold text-[#b42323] hover:bg-argile-50" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>
-              }
-              @if (d.statut === 'ACCEPTEE') {
+      <div class="mt-6 grid xl:grid-cols-3 gap-6 [&>*]:min-w-0">
+        <section class="dash-panel p-5 sm:p-6 xl:col-span-2" aria-labelledby="ca-titre">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="ca-titre" class="font-sans text-base font-bold tracking-normal">Revenus des 6 derniers mois</h2>
+            <p class="text-sm text-encre-soft">Total <strong class="text-encre tabular-nums">{{ totalPeriode() | number: '1.0-0' }} MAD</strong></p>
+          </div>
+          @if (demandes() === null) {
+            <div class="skeleton mt-6 h-52 !rounded-xl"></div>
+          } @else {
+            <app-bar-chart class="mt-6" [months]="mois()" caption="Montant des interventions terminées par mois" />
+          }
+        </section>
+
+        <section class="dash-panel p-5 sm:p-6" aria-labelledby="rep-titre">
+          <h2 id="rep-titre" class="font-sans text-base font-bold tracking-normal">Répartition des demandes</h2>
+          <div class="mt-6 flex h-2.5 overflow-hidden rounded-full bg-encre/[0.06]" aria-hidden="true">
+            @for (st of ORDRE; track st) {
+              <div class="transition-[width] duration-500" [class]="STATUTS[st].dot" [style.width.%]="part(st)"></div>
+            }
+          </div>
+          <ul class="mt-5 space-y-3">
+            @for (st of ORDRE; track st) {
+              <li class="flex items-center justify-between text-sm">
+                <span class="flex items-center gap-2.5"><span class="size-2.5 rounded-full" [class]="STATUTS[st].dot"></span>{{ STATUTS[st].label }}</span>
+                <span class="font-semibold tabular-nums">{{ repartition()[st] }}</span>
+              </li>
+            }
+          </ul>
+          <p class="mt-5 pt-4 border-t border-encre/10 text-xs text-encre-soft">Sur vos {{ demandes()?.length ?? 0 }} dernières demandes.</p>
+        </section>
+      </div>
+
+      <div class="mt-6 grid xl:grid-cols-2 gap-6 [&>*]:min-w-0 items-start">
+        <section class="dash-panel" aria-labelledby="agenda-titre">
+          <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-encre/10">
+            <h2 id="agenda-titre" class="font-sans text-base font-bold tracking-normal">Prochaines interventions</h2>
+          </div>
+          <ul class="divide-y divide-encre/10">
+            @for (d of aVenir(); track d.id) {
+              <li class="flex items-center gap-4 px-5 sm:px-6 py-3.5">
+                <div class="w-12 shrink-0 rounded-lg bg-menthe-50 py-1.5 text-center leading-none">
+                  <span class="block font-display text-xl font-bold text-menthe-deep">{{ d.dateIntervention | date: 'd' }}</span>
+                  <span class="block mt-0.5 text-[11px] text-menthe-deep">{{ d.dateIntervention | date: 'MMM' }}</span>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold truncate">{{ d.clientNomComplet }}</p>
+                  <p class="text-sm text-encre-soft truncate">{{ d.dateIntervention | date: "EEEE 'à' HH:mm" }} — {{ d.annonceTitre ?? d.description }}</p>
+                </div>
+                @if (d.prixConvenu != null) { <span class="hidden sm:block text-sm font-semibold tabular-nums">{{ d.prixConvenu | price }}</span> }
+              </li>
+            } @empty {
+              <li class="px-5 sm:px-6 py-8 text-sm text-encre-soft">Aucune intervention prévue. Les demandes que vous acceptez apparaissent ici.</li>
+            }
+          </ul>
+        </section>
+
+        <section class="dash-panel" aria-labelledby="atraiter-titre">
+          <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-encre/10">
+            <h2 id="atraiter-titre" class="font-sans text-base font-bold tracking-normal">À traiter</h2>
+            <a routerLink="/espace/artisan" [queryParams]="{ onglet: 'demandes' }" class="text-sm font-semibold text-menthe-deep hover:underline">Toutes les demandes</a>
+          </div>
+          <ul class="divide-y divide-encre/10">
+            @for (d of aTraiter(); track d.id) {
+              <li class="flex flex-wrap items-center gap-3 px-5 sm:px-6 py-3.5">
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold truncate">{{ d.clientNomComplet }}</p>
+                  <p class="text-sm text-encre-soft truncate">{{ d.dateIntervention | date: "d MMM 'à' HH:mm" }} — {{ d.description }}</p>
+                </div>
+                <div class="flex gap-1.5">
+                  <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>
+                  <button type="button" class="dash-btn dash-btn-accent" [disabled]="busyId() === d.id" (click)="accept(d)">Accepter</button>
+                </div>
+              </li>
+            } @empty {
+              <li class="px-5 sm:px-6 py-8 text-sm text-encre-soft">Aucune demande en attente.</li>
+            }
+          </ul>
+        </section>
+      </div>
+    }
+
+    <!-- ============ Demandes ============ -->
+    @case ('demandes') {
+      <div class="mt-6 flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par statut">
+        @for (f of FILTRES; track f) {
+          <button type="button" (click)="filtre.set(f)" [attr.aria-pressed]="filtre() === f"
+                  class="rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors"
+                  [class]="filtre() === f ? 'bg-encre text-white' : 'bg-white border border-encre/10 text-encre-soft hover:text-encre'">
+            {{ f === 'TOUTES' ? 'Toutes' : STATUTS[f].label }}
+            <span class="ml-1 tabular-nums opacity-70">{{ f === 'TOUTES' ? (demandes()?.length ?? 0) : repartition()[f] }}</span>
+          </button>
+        }
+      </div>
+
+      @let list = demandesFiltrees();
+      <div class="dash-panel mt-4 overflow-hidden">
+        <div class="hidden md:grid grid-cols-[1.4fr_1.6fr_1fr_0.8fr_auto] gap-4 px-5 py-3 border-b border-encre/10 bg-encre/[0.02] text-xs font-semibold text-encre-soft">
+          <span>Client</span><span>Demande</span><span>Intervention</span><span class="text-right">Montant</span><span class="w-52 text-right">Actions</span>
+        </div>
+        @if (list === null) {
+          <div class="p-5 space-y-3" aria-busy="true">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-12 !rounded-lg"></div> }</div>
+        } @else {
+          <ul class="divide-y divide-encre/10">
+            @for (d of list; track d.id) {
+              <li class="px-5 py-4">
+                <div class="grid md:grid-cols-[1.4fr_1.6fr_1fr_0.8fr_auto] gap-x-4 gap-y-2 md:items-center">
+                  <div class="min-w-0">
+                    <p class="font-semibold truncate">{{ d.clientNomComplet }}</p>
+                    <app-statut-badge class="mt-1 inline-block" [statut]="d.statut" />
+                  </div>
+                  <div class="min-w-0 text-sm">
+                    @if (d.annonceTitre) {
+                      <a [routerLink]="['/annonces', d.annonceId]" class="block font-semibold text-menthe-deep truncate hover:underline">{{ d.annonceTitre }}</a>
+                    }
+                    <p class="text-encre-soft line-clamp-2">{{ d.description }}</p>
+                  </div>
+                  <p class="text-sm">{{ d.dateIntervention | date: "d MMM y, HH:mm" }}</p>
+                  <p class="text-sm font-semibold tabular-nums md:text-right">
+                    {{ d.prixFinal != null ? (d.prixFinal | price) : d.prixConvenu != null ? (d.prixConvenu | price) : '—' }}
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 md:w-52 md:justify-end">
+                    <a [routerLink]="['/messages', d.clientId]" [queryParams]="{ nom: d.clientNomComplet, annonce: d.annonceId }" class="dash-btn">Message</a>
+                    @if (d.statut === 'EN_ATTENTE') {
+                      <button type="button" class="dash-btn dash-btn-accent" [disabled]="busyId() === d.id" (click)="accept(d)">Accepter</button>
+                      <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>
+                    }
+                    @if (d.statut === 'ACCEPTEE' && finishing() !== d.id) {
+                      <button type="button" class="dash-btn dash-btn-primary" (click)="startFinish(d)">Clôturer</button>
+                    }
+                  </div>
+                </div>
                 @if (finishing() === d.id) {
-                  <form class="flex flex-wrap items-center gap-2" (ngSubmit)="confirmFinish(d)">
-                    <label class="flex items-center gap-2">
+                  <form class="enter-rise mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-citron-50 px-4 py-3" (ngSubmit)="confirmFinish(d)">
+                    <label class="flex items-center gap-2 text-sm">
                       <span class="font-semibold">Montant final</span>
-                      <input type="number" name="prixFinal" min="0" [(ngModel)]="prixFinal" class="field !mt-0 !py-2 w-32" />
+                      <input type="number" name="prixFinal" min="0" [(ngModel)]="prixFinal" class="field !mt-0 !py-1.5 !rounded-lg w-32 text-sm" />
                       <span>MAD</span>
                     </label>
-                    <button type="submit" class="btn btn-citron !py-2 !px-4 !text-base" [disabled]="busyId() === d.id">Clôturer</button>
-                    <button type="button" class="font-semibold px-2" (click)="finishing.set(null)">Annuler</button>
+                    <button type="submit" class="dash-btn dash-btn-primary" [disabled]="busyId() === d.id">Marquer comme terminée</button>
+                    <button type="button" class="dash-btn dash-btn-danger !text-encre-soft" (click)="finishing.set(null)">Annuler</button>
                   </form>
-                } @else {
-                  <button type="button" class="btn btn-citron !py-2 !px-4 !text-base" (click)="startFinish(d)">Marquer comme terminée</button>
                 }
-              }
-            </div>
-          </li>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center text-sm text-encre-soft">
+                {{ filtre() === 'TOUTES' ? "Aucune demande pour le moment. Elles apparaîtront ici dès qu'un client vous sollicite." : 'Aucune demande avec ce statut.' }}
+              </li>
+            }
+          </ul>
         }
-      </ul>
+      </div>
+    }
+
+    <!-- ============ Annonces ============ -->
+    @case ('annonces') {
+      @let list = annonces();
+      @if (list === null) {
+        <div class="dash-panel mt-6 p-5 space-y-3" aria-busy="true">@for (i of [1, 2]; track i) { <div class="skeleton h-16 !rounded-lg"></div> }</div>
+      } @else if (!list.length) {
+        <div class="dash-panel mt-6 p-10 text-center">
+          <p class="font-display text-2xl font-bold">Vous n'avez pas encore d'annonce.</p>
+          <p class="mt-2 text-encre-soft">Présentez un service avec des photos de vos réalisations : c'est ce que les clients regardent en premier.</p>
+          <a routerLink="/espace/artisan/annonces/nouvelle" class="dash-btn dash-btn-primary !px-4 !py-2.5 mt-6">Publier ma première annonce</a>
+        </div>
+      } @else {
+        <div class="dash-panel mt-6 overflow-hidden">
+          <div class="hidden md:grid grid-cols-[2.4fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-encre/10 bg-encre/[0.02] text-xs font-semibold text-encre-soft">
+            <span>Annonce</span><span>Tarif</span><span>Avis</span><span class="w-64 text-right">Actions</span>
+          </div>
+          <ul class="divide-y divide-encre/10">
+            @for (a of list; track a.id) {
+              <li class="grid md:grid-cols-[2.4fr_1fr_1fr_auto] gap-x-4 gap-y-3 md:items-center px-5 py-4">
+                <div class="flex items-center gap-4 min-w-0">
+                  <img [src]="mediaUrl(a.images[0]?.url)" alt="" class="w-20 aspect-[4/3] shrink-0 rounded-lg object-cover bg-menthe-50" [class.grayscale]="!a.active" />
+                  <div class="min-w-0">
+                    <a [routerLink]="['/annonces', a.id]" class="block font-semibold truncate hover:underline">{{ a.titre }}</a>
+                    <p class="mt-0.5 flex items-center gap-2 text-sm text-encre-soft">
+                      <span class="inline-flex items-center gap-1.5 text-xs font-bold" [class]="a.active ? 'text-menthe-deep' : 'text-encre-soft'">
+                        <span class="size-1.5 rounded-full" [class]="a.active ? 'bg-menthe' : 'bg-encre/30'"></span>{{ a.active ? 'En ligne' : 'Masquée' }}
+                      </span>
+                      <span class="truncate">{{ a.metier }}@if (a.ville) {, {{ a.ville }}} — {{ a.images.length }} photo(s)</span>
+                    </p>
+                  </div>
+                </div>
+                <p class="text-sm font-semibold tabular-nums">{{ a | price }}</p>
+                <app-stars [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="13" />
+                <div class="flex flex-wrap gap-1.5 md:w-64 md:justify-end">
+                  <a [routerLink]="['/espace/artisan/annonces', a.id, 'modifier']" class="dash-btn">Modifier</a>
+                  <button type="button" class="dash-btn" [disabled]="busyId() === a.id" (click)="toggle(a)">{{ a.active ? 'Masquer' : 'Remettre en ligne' }}</button>
+                  <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === a.id" (click)="remove(a)">Supprimer</button>
+                </div>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     }
   }
-</section>
+</app-dashboard-shell>

@@ -1,37 +1,43 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { mediaUrl } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
-import { Annonce, ArtisanDashboard, Demande } from '../../core/models';
+import { Annonce, ArtisanDashboard, Demande, StatutDemande } from '../../core/models';
 import { AnnonceService } from '../../core/services/annonce.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
+import { countByStatut, monthlyTotals, upcoming } from '../../core/dashboard-stats';
+import { BarChartComponent } from '../../ui/bar-chart.component';
+import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
-import { StatutBadgeComponent } from '../../ui/statut-badge.component';
+import { STATUTS, StatutBadgeComponent } from '../../ui/statut-badge.component';
 
-type Onglet = 'annonces' | 'demandes';
+type Onglet = 'apercu' | 'annonces' | 'demandes';
+type Filtre = StatutDemande | 'TOUTES';
 
 @Component({
   selector: 'app-artisan-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, BarChartComponent, DashboardShellComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './artisan-dashboard.page.html',
 })
 export class ArtisanDashboardPage {
   private readonly dashboardApi = inject(DashboardService);
   private readonly annoncesApi = inject(AnnonceService);
   private readonly demandesApi = inject(DemandeService);
-  private readonly router = inject(Router);
   protected readonly auth = inject(AuthService);
 
-  /** ?onglet=annonces|demandes */
+  /** ?onglet=apercu|annonces|demandes */
   readonly onglet = input<string>();
-  protected readonly ongletActif = computed<Onglet>(() => (this.onglet() === 'demandes' ? 'demandes' : 'annonces'));
+  protected readonly ongletActif = computed<Onglet>(() => {
+    const o = this.onglet();
+    return o === 'annonces' || o === 'demandes' ? o : 'apercu';
+  });
 
   protected readonly stats = signal<ArtisanDashboard | null>(null);
   protected readonly annonces = signal<Annonce[] | null>(null);
@@ -43,7 +49,40 @@ export class ArtisanDashboardPage {
   protected readonly finishing = signal<number | null>(null);
   protected prixFinal: number | null = null;
 
+  protected readonly filtre = signal<Filtre>('TOUTES');
+
   protected readonly mediaUrl = mediaUrl;
+  protected readonly STATUTS = STATUTS;
+  protected readonly ORDRE: StatutDemande[] = ['EN_ATTENTE', 'ACCEPTEE', 'TERMINEE', 'REFUSEE'];
+  protected readonly FILTRES: Filtre[] = ['TOUTES', ...this.ORDRE];
+  protected readonly today = new Date();
+
+  protected readonly nav = computed<DashNavItem[]>(() => {
+    const o = this.ongletActif();
+    return [
+      { label: "Vue d'ensemble", link: '/espace/artisan', active: o === 'apercu' },
+      { label: 'Demandes', link: '/espace/artisan', queryParams: { onglet: 'demandes' }, active: o === 'demandes', badge: this.stats()?.demandesEnAttente },
+      { label: 'Mes annonces', link: '/espace/artisan', queryParams: { onglet: 'annonces' }, active: o === 'annonces' },
+      { label: 'Messages', link: '/messages' },
+      { label: 'Profil', link: '/espace/profil' },
+    ];
+  });
+
+  protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
+  protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
+  protected readonly repartition = computed(() => countByStatut(this.demandes() ?? []));
+  protected readonly aVenir = computed(() => upcoming(this.demandes() ?? []));
+  protected readonly aTraiter = computed(() => (this.demandes() ?? []).filter((d) => d.statut === 'EN_ATTENTE').slice(0, 4));
+  protected readonly demandesFiltrees = computed(() => {
+    const f = this.filtre();
+    const list = this.demandes();
+    return list && f !== 'TOUTES' ? list.filter((d) => d.statut === f) : list;
+  });
+
+  protected part(statut: StatutDemande) {
+    const total = this.demandes()?.length;
+    return total ? (this.repartition()[statut] / total) * 100 : 0;
+  }
 
   ngOnInit() {
     this.refresh();
@@ -53,10 +92,6 @@ export class ArtisanDashboardPage {
     this.dashboardApi.artisan().subscribe((s) => this.stats.set(s));
     this.annoncesApi.mine().subscribe((p) => this.annonces.set(p.content));
     this.demandesApi.received(0, 50).subscribe((p) => this.demandes.set(p.content));
-  }
-
-  protected setOnglet(o: Onglet) {
-    this.router.navigate([], { queryParams: { onglet: o }, replaceUrl: true });
   }
 
   protected toggle(a: Annonce) {
