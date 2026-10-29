@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
 import { filter, map } from 'rxjs';
@@ -11,14 +11,23 @@ import {
   RouterLink,
   RouterLinkActive,
 } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
+import { RealtimeService } from '../../core/realtime.service';
+import { NotificationBellComponent } from './notification-bell.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [NgClass, RouterLink, RouterLinkActive],
+  imports: [NgClass, RouterLink, RouterLinkActive, NotificationBellComponent],
   templateUrl: './header.component.html',
 })
 export class HeaderComponent {
+  private readonly auth = inject(AuthService);
+  private readonly realtime = inject(RealtimeService);
+
+  protected readonly loggedIn = this.auth.isLoggedIn;
+  protected readonly unreadMessages = this.realtime.unreadMessages;
+  protected readonly homeUrl = computed(() => this.auth.homeUrl());
   protected readonly scrolled = signal(false);
   protected readonly mobileOpen = signal(false);
 
@@ -39,8 +48,8 @@ export class HeaderComponent {
 
   protected readonly links = [
     { label: 'Accueil', href: '/' },
+    { label: 'Annonces', href: '/annonces' },
     { label: 'Artisans', href: '/artisans' },
-    { label: 'Services', href: '/services' },
     { label: 'Comment ça marche', href: '/how-it-works' },
     { label: 'Contact', href: '/contact' },
   ];
@@ -56,5 +65,10 @@ export class HeaderComponent {
 
   closeMobile() {
     this.mobileOpen.set(false);
+  }
+
+  logout() {
+    this.closeMobile();
+    this.auth.logout();
   }
 }

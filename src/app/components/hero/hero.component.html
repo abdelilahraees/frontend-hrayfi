@@ -11,7 +11,7 @@
         d'artisans vérifiés près de chez vous.
       </p>
 
-      <form class="mt-9 max-w-2xl" role="search" (submit)="$event.preventDefault()">
+      <form class="mt-9 max-w-2xl" role="search" (submit)="$event.preventDefault(); search(service.value, city.value)">
         <div
           class="bg-white rounded-[28px] sm:rounded-full border-2 border-encre p-2 flex flex-col sm:flex-row sm:items-center gap-1 shadow-[0_6px_0_var(--color-encre)] focus-within:shadow-[0_6px_0_var(--color-menthe-deep)] transition-shadow"
         >
@@ -21,6 +21,7 @@
             </svg>
             <span class="sr-only">Quel travail ?</span>
             <input
+              #service
               type="text"
               name="service"
               placeholder="Quel travail ? Ex. fuite d'eau"
@@ -31,6 +32,7 @@
           <label class="sm:w-40 flex items-center gap-3 pl-4 pr-2 py-2 border-t-2 sm:border-t-0 border-encre/10 cursor-text">
             <span class="sr-only">Ville</span>
             <input
+              #city
               type="text"
               name="city"
               placeholder="Ville"
@@ -45,13 +47,14 @@
         <div class="mt-6 flex flex-wrap items-center gap-2">
           <span class="text-sm font-semibold text-encre-soft mr-1">Souvent demandé :</span>
           @for (p of popular; track p.label) {
-            <button
-              type="button"
+            <a
+              [routerLink]="['/annonces']"
+              [queryParams]="{ metier: p.metier }"
               class="press inline-flex items-center gap-1.5 rounded-full bg-menthe-50 hover:bg-citron-50 border-2 border-transparent hover:border-encre/15 pl-1.5 pr-3.5 py-1 text-sm font-semibold"
             >
               <app-sticker [name]="p.sticker" class="w-6 h-6 !filter-none" />
               {{ p.label }}
-            </button>
+            </a>
           }
         </div>
       </form>
