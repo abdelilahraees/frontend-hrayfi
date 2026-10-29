@@ -1,59 +1,67 @@
-# Frontend
+# Hrayfi — Frontend (Angular 20)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.24.
+Plateforme qui met en relation des clients et des artisans au Maroc.
+Ce dépôt contient l'interface web ; l'API est dans `hrayfi-backend`.
 
-## Development server
+## Fonctionnalités
 
-To start a local development server, run:
+| Profil | Ce qu'il peut faire |
+| --- | --- |
+| Visiteur | Rechercher et filtrer les annonces (mot-clé, métier, ville, note minimum, budget, tri), voir les photos, les prix et les avis, consulter l'annuaire et le profil des artisans |
+| Client | S'inscrire / se connecter, noter et commenter une annonce, discuter avec un artisan et négocier le prix (offres et contre-offres), réserver au prix convenu, suivre ses demandes, évaluer une intervention terminée |
+| Artisan | S'inscrire / se connecter, publier des annonces avec photos, les modifier, masquer ou supprimer, accepter / refuser / clôturer les demandes, répondre aux messages, suivre ses statistiques |
 
-```bash
-ng serve
-```
+Messages et notifications arrivent en temps réel (STOMP over WebSocket).
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Pages
 
-## Code scaffolding
+| Route | Page |
+| --- | --- |
+| `/annonces`, `/services/:categorie` | Recherche et filtres |
+| `/annonces/:id` | Détail d'une annonce, avis, contact, demande d'intervention |
+| `/artisans`, `/artisans/:id` | Annuaire et profil public |
+| `/login`, `/register` | Connexion, inscription client ou artisan (`?profil=artisan`) |
+| `/espace/client` | Tableau de bord client |
+| `/espace/artisan` | Tableau de bord artisan (annonces, demandes reçues) |
+| `/espace/artisan/annonces/nouvelle` | Publier une annonce avec photos |
+| `/espace/profil` | Modifier son profil |
+| `/messages`, `/messages/:userId` | Messagerie et négociation |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Démarrer
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+1. Lancer le backend (voir son README) sur `http://localhost:8080`.
+   L'adresse se change dans `src/app/core/api.config.ts`.
+2. Installer et lancer le front :
 
 ```bash
-ng test
+npm install
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
 
 ```bash
-ng e2e
+npm start
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Puis ouvrir `http://localhost:4200`.
 
-## Additional Resources
+Avec `SEED_DEMO=true` côté backend, ces comptes existent (mot de passe `password123`) :
+`client.demo@hrayfi.ma` (client) et `artisan.demo@hrayfi.ma` (artisan plombier).
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Structure
+
+```
+src/app/
+  core/        session JWT, intercepteur, guards, services API, client temps réel, modèles
+  pages/       une page par route (chargée à la demande)
+  components/  sections de l'accueil, en-tête, pied de page
+  ui/          composants réutilisables (étoiles, carte d'annonce, pagination…)
+```
+
+## Commandes
+
+```bash
+npm run build
+```
+
+```bash
+npm test
+```
