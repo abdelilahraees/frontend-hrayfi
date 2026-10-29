@@ -31,6 +31,9 @@ export class AnnonceDetailPage {
   protected readonly auth = inject(AuthService);
 
   readonly id = input.required<string>();
+  /** ?reserver=1&prix=350 : ouvre le formulaire de demande au prix négocié dans la messagerie */
+  readonly reserver = input<string>();
+  readonly prix = input<string>();
 
   protected readonly annonce = signal<Annonce | null>(null);
   protected readonly artisan = signal<ArtisanPublic | null>(null);
@@ -65,6 +68,10 @@ export class AnnonceDetailPage {
 
   ngOnInit() {
     this.load();
+    if (this.reserver()) {
+      this.bookingPrix = this.prix() ? Number(this.prix()) : null;
+      this.openBooking();
+    }
   }
 
   private load() {
