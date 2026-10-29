@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,7 +9,10 @@ import { AvisService } from '../../core/services/avis.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
 import { MessageService } from '../../core/services/message.service';
+import { monthlyTotals, upcoming } from '../../core/dashboard-stats';
 import { AvatarComponent } from '../../ui/avatar.component';
+import { BarChartComponent } from '../../ui/bar-chart.component';
+import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarInputComponent } from '../../ui/star-input.component';
 import { StarsComponent } from '../../ui/stars.component';
@@ -19,7 +22,7 @@ import { StatutBadgeComponent } from '../../ui/statut-badge.component';
 @Component({
   selector: 'app-client-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './client-dashboard.page.html',
 })
 export class ClientDashboardPage {
@@ -33,6 +36,18 @@ export class ClientDashboardPage {
   protected readonly demandes = signal<Demande[] | null>(null);
   protected readonly avis = signal<Avis[]>([]);
   protected readonly conversations = signal<Conversation[]>([]);
+
+  protected readonly today = new Date();
+  protected readonly nav: DashNavItem[] = [
+    { label: "Vue d'ensemble", link: '/espace/client', active: true },
+    { label: 'Trouver un artisan', link: '/annonces' },
+    { label: 'Messages', link: '/messages' },
+    { label: 'Profil', link: '/espace/profil' },
+  ];
+
+  protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
+  protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
+  protected readonly aVenir = computed(() => upcoming(this.demandes() ?? [], 4));
 
   /** Évaluation de fin d'intervention en cours de saisie */
   protected readonly evaluating = signal<number | null>(null);

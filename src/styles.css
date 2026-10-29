@@ -62,6 +62,17 @@
       has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-menthe;
   }
 
+  /* Espaces client / artisan : surfaces et boutons plus sobres que le site vitrine */
+  .bg-dash { background-color: #f4f7f6; }
+  .dash-panel { @apply rounded-2xl border border-encre/10 bg-white; }
+  .dash-btn {
+    @apply inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-encre/15 bg-white px-3 py-1.5 text-sm font-semibold text-encre transition-colors
+      hover:border-encre/40 disabled:opacity-50;
+  }
+  .dash-btn-primary { @apply border-encre bg-encre text-white hover:bg-encre/85; }
+  .dash-btn-accent { @apply border-menthe-deep bg-menthe-deep text-white hover:bg-[#0b6647]; }
+  .dash-btn-danger { @apply border-transparent bg-transparent text-[#b42323] hover:border-transparent hover:bg-argile-50; }
+
   .field {
     @apply mt-2 w-full rounded-2xl border-2 border-encre/15 bg-white px-4 py-3 text-base placeholder:text-encre-soft/60
       focus:outline-none focus:border-menthe focus:ring-4 focus:ring-menthe/20
