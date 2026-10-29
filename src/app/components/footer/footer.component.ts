@@ -31,7 +31,7 @@ export class FooterComponent {
         { label: 'Plomberie', href: '/services/plomberie' },
         { label: 'Électricité', href: '/services/electricite' },
         { label: 'Menuiserie', href: '/services/menuiserie' },
-        { label: 'Toutes les catégories', href: '/services' },
+        { label: 'Toutes les annonces', href: '/annonces' },
       ],
     },
     {
