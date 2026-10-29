@@ -108,7 +108,7 @@
             </p>
 
             <div class="mt-4 flex flex-wrap items-center gap-2">
-              <a [routerLink]="['/messages', d.clientId]" class="btn btn-white !py-2 !px-4 !text-base">Message</a>
+              <a [routerLink]="['/messages', d.clientId]" [queryParams]="{ nom: d.clientNomComplet, annonce: d.annonceId }" class="btn btn-white !py-2 !px-4 !text-base">Message</a>
               @if (d.statut === 'EN_ATTENTE') {
                 <button type="button" class="btn btn-menthe !py-2 !px-4 !text-base" [disabled]="busyId() === d.id" (click)="accept(d)">Accepter</button>
                 <button type="button" class="press rounded-full px-4 py-2 font-semibold text-[#b42323] hover:bg-argile-50" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>

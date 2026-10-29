@@ -55,7 +55,7 @@
               @if (d.prixFinal != null) { · Montant final : <strong class="text-encre">{{ d.prixFinal | price }}</strong> }
             </p>
             <div class="mt-4 flex flex-wrap gap-2">
-              <a [routerLink]="['/messages', d.artisanId]" class="btn btn-white !py-2 !px-4 !text-base">Message</a>
+              <a [routerLink]="['/messages', d.artisanId]" [queryParams]="{ annonce: d.annonceId }" class="btn btn-white !py-2 !px-4 !text-base">Message</a>
               @if (d.statut === 'TERMINEE' && !evaluated().has(d.id) && evaluating() !== d.id) {
                 <button type="button" class="btn btn-citron !py-2 !px-4 !text-base" (click)="startEval(d)">Évaluer l'intervention</button>
               }
