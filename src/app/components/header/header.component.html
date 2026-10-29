@@ -34,9 +34,24 @@
       </nav>
 
       <!-- CTA -->
-      <div class="hidden lg:flex items-center gap-4">
-        <a routerLink="/login" class="text-[15px] font-semibold text-encre/80 hover:text-encre">Se connecter</a>
-        <a routerLink="/post-project" class="btn btn-citron !py-2.5 !px-5 !text-base">Publier un projet</a>
+      <div class="hidden lg:flex items-center gap-3">
+        @if (loggedIn()) {
+          <a routerLink="/messages" class="press relative grid place-items-center w-11 h-11 rounded-full hover:bg-menthe-50"
+             [attr.aria-label]="'Messages' + (unreadMessages() ? ', ' + unreadMessages() + ' non lus' : '')">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linejoin="round" d="M4 5h16v11H9l-5 4V5z" />
+            </svg>
+            @if (unreadMessages()) {
+              <span class="absolute top-1 right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-citron border-2 border-encre text-[11px] font-bold leading-none">{{ unreadMessages() }}</span>
+            }
+          </a>
+          <app-notification-bell />
+          <a [routerLink]="homeUrl()" class="btn btn-citron !py-2.5 !px-5 !text-base">Mon espace</a>
+          <button type="button" (click)="logout()" class="text-[15px] font-semibold text-encre/80 hover:text-encre px-2">Déconnexion</button>
+        } @else {
+          <a routerLink="/login" class="text-[15px] font-semibold text-encre/80 hover:text-encre">Se connecter</a>
+          <a routerLink="/register" [queryParams]="{ profil: 'artisan' }" class="btn btn-citron !py-2.5 !px-5 !text-base">Publier mes services</a>
+        }
       </div>
 
       <!-- Mobile toggle -->
@@ -85,8 +100,19 @@
             >{{ link.label }}</a
           >
         }
-        <a routerLink="/login" (click)="closeMobile()" class="mt-3 px-4 py-2 font-semibold text-encre/80">Se connecter</a>
-        <a routerLink="/post-project" (click)="closeMobile()" class="btn btn-citron mt-3">Publier un projet</a>
+        @if (loggedIn()) {
+          <a routerLink="/messages" (click)="closeMobile()" class="font-display font-bold text-2xl px-4 py-2.5 rounded-2xl hover:bg-menthe-50">
+            Messages
+            @if (unreadMessages()) {
+              <span class="ml-2 align-middle inline-grid place-items-center min-w-6 h-6 px-1.5 rounded-full bg-citron border-2 border-encre text-xs">{{ unreadMessages() }}</span>
+            }
+          </a>
+          <a [routerLink]="homeUrl()" (click)="closeMobile()" class="btn btn-citron mt-3">Mon espace</a>
+          <button type="button" (click)="logout()" class="mt-3 px-4 py-2 text-left font-semibold text-encre/80">Déconnexion</button>
+        } @else {
+          <a routerLink="/login" (click)="closeMobile()" class="mt-3 px-4 py-2 font-semibold text-encre/80">Se connecter</a>
+          <a routerLink="/register" [queryParams]="{ profil: 'artisan' }" (click)="closeMobile()" class="btn btn-citron mt-3">Publier mes services</a>
+        }
       </nav>
     </div>
   }
