@@ -11,6 +11,31 @@ export const routes: Routes = [
     title: 'Services — Hrayfi',
   },
   {
+    path: 'services/:key',
+    loadComponent: () => import('./pages/annonces/annonces.page').then((m) => m.AnnoncesPage),
+    title: 'Services — Hrayfi',
+  },
+  {
+    path: 'annonces',
+    loadComponent: () => import('./pages/annonces/annonces.page').then((m) => m.AnnoncesPage),
+    title: 'Annonces — Hrayfi',
+  },
+  {
+    path: 'annonces/:id',
+    loadComponent: () => import('./pages/annonces/annonce-detail.page').then((m) => m.AnnonceDetailPage),
+    title: 'Annonce — Hrayfi',
+  },
+  {
+    path: 'artisans',
+    loadComponent: () => import('./pages/artisans/artisans.page').then((m) => m.ArtisansPage),
+    title: 'Artisans — Hrayfi',
+  },
+  {
+    path: 'artisans/:id',
+    loadComponent: () => import('./pages/artisans/artisan-profile.page').then((m) => m.ArtisanProfilePage),
+    title: 'Artisan — Hrayfi',
+  },
+  {
     path: 'how-it-works',
     loadComponent: () => import('./pages/how-it-works/how-it-works.page').then((m) => m.HowItWorksPage),
     title: 'Comment ça marche — Hrayfi',
