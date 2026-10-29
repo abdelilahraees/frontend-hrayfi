@@ -1,5 +1,18 @@
 <app-header />
-<main>
+<main [class.bg-dash]="appPage()">
   <router-outlet />
 </main>
-<app-footer />
+@if (appPage()) {
+  <footer class="border-t border-encre/10 bg-[#f4f7f6]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-encre-soft">
+      <p>© {{ year }} Hrayfi</p>
+      <ul class="flex flex-wrap gap-x-5 gap-y-1">
+        <li><a routerLink="/contact" class="hover:text-encre">Aide et contact</a></li>
+        <li><a routerLink="/legal/privacy" class="hover:text-encre">Confidentialité</a></li>
+        <li><a routerLink="/legal/terms" class="hover:text-encre">CGU</a></li>
+      </ul>
+    </div>
+  </footer>
+} @else {
+  <app-footer />
+}
