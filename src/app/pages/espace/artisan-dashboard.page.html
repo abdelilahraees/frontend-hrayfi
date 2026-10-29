@@ -1,0 +1,137 @@
+@let s = stats();
+@let u = auth.user();
+
+<section class="bg-menthe-50 border-b-2 border-encre/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+      <div>
+        <p class="font-semibold text-menthe-deep">Espace artisan</p>
+        <h1 class="mt-1 text-5xl sm:text-6xl">Bonjour {{ u?.prenom }}</h1>
+        @if (u?.metier) { <p class="mt-2 text-lg text-encre-soft">{{ u?.metier }}@if (u?.ville) { · {{ u?.ville }} }</p> }
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a routerLink="/espace/profil" class="btn btn-white">Mon profil</a>
+        <a routerLink="/espace/artisan/annonces/nouvelle" class="btn btn-citron">Publier une annonce</a>
+      </div>
+    </div>
+
+    <div class="mt-9 grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <app-stat-tile label="Demandes en attente" [value]="s?.demandesEnAttente ?? '–'" tone="bg-citron" />
+      <app-stat-tile label="Interventions acceptées" [value]="s?.demandesAcceptees ?? '–'" />
+      <app-stat-tile label="Chiffre d'affaires du mois" [value]="s ? (s.chiffreAffairesCeMois | number: '1.0-0') + ' MAD' : '–'"
+                     [hint]="s ? s.demandesTermineesCeMois + ' intervention(s) terminée(s)' : ''" />
+      <app-stat-tile label="Note de mes annonces" [value]="s ? (s.nbAvisAnnonces ? (s.noteMoyenneAnnonces | number: '1.1-1') + ' / 5' : '–') : '–'"
+                     [hint]="s ? s.nbAvisAnnonces + ' avis' : ''" />
+      <app-stat-tile label="Annonces en ligne" [value]="s ? s.nbAnnoncesActives + ' / ' + s.nbAnnonces : '–'"
+                     [hint]="s ? 'Taux d\'acceptation ' + (s.tauxAcceptation * 100 | number: '1.0-0') + ' %' : ''" />
+    </div>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="flex gap-2 border-b-2 border-encre/10" role="tablist">
+    <button type="button" role="tab" [attr.aria-selected]="ongletActif() === 'annonces'" (click)="setOnglet('annonces')"
+            class="px-5 py-3 -mb-0.5 font-display text-xl font-bold border-b-4"
+            [class.border-menthe]="ongletActif() === 'annonces'" [class.border-transparent]="ongletActif() !== 'annonces'">
+      Mes annonces
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="ongletActif() === 'demandes'" (click)="setOnglet('demandes')"
+            class="px-5 py-3 -mb-0.5 font-display text-xl font-bold border-b-4"
+            [class.border-menthe]="ongletActif() === 'demandes'" [class.border-transparent]="ongletActif() !== 'demandes'">
+      Demandes reçues
+      @if (s?.demandesEnAttente) {
+        <span class="ml-1 inline-grid place-items-center min-w-6 h-6 px-1.5 rounded-full bg-citron border-2 border-encre text-xs align-middle">{{ s?.demandesEnAttente }}</span>
+      }
+    </button>
+  </div>
+
+  @if (error()) {
+    <p role="alert" class="mt-6 rounded-2xl border-2 border-[#d23c3c]/30 bg-argile-50 px-4 py-3">{{ error() }}</p>
+  }
+
+  @if (ongletActif() === 'annonces') {
+    @let list = annonces();
+    @if (list === null) {
+      <div class="mt-8 space-y-4" aria-busy="true">@for (i of [1, 2]; track i) { <div class="skeleton h-28 !rounded-[28px]"></div> }</div>
+    } @else if (!list.length) {
+      <div class="mt-8 rounded-[28px] border-2 border-dashed border-encre/20 p-10 text-center">
+        <p class="font-display text-2xl font-bold">Vous n'avez pas encore d'annonce.</p>
+        <p class="mt-2 text-encre-soft">Présentez un service avec des photos de vos réalisations : c'est ce que les clients regardent en premier.</p>
+        <a routerLink="/espace/artisan/annonces/nouvelle" class="btn btn-citron mt-6">Publier ma première annonce</a>
+      </div>
+    } @else {
+      <ul class="mt-8 space-y-4">
+        @for (a of list; track a.id) {
+          <li class="flex flex-col sm:flex-row gap-5 rounded-[28px] border-2 border-encre/15 p-4 sm:items-center" [class.opacity-70]="!a.active">
+            <img [src]="mediaUrl(a.images[0]?.url)" alt="" class="w-full sm:w-36 aspect-[4/3] rounded-2xl object-cover border-2 border-encre/10" />
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <a [routerLink]="['/annonces', a.id]" class="font-display text-2xl font-bold hover:underline">{{ a.titre }}</a>
+                @if (!a.active) { <span class="rounded-full border-2 border-encre px-2.5 py-0.5 text-xs font-bold">Masquée</span> }
+              </div>
+              <p class="text-sm text-encre-soft">{{ a.metier }}@if (a.ville) { · {{ a.ville }} } · {{ a.images.length }} photo(s) · {{ a | price }}</p>
+              <app-stars class="mt-2" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="14" />
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a [routerLink]="['/espace/artisan/annonces', a.id, 'modifier']" class="btn btn-white !py-2 !px-4 !text-base">Modifier</a>
+              <button type="button" class="btn btn-white !py-2 !px-4 !text-base" [disabled]="busyId() === a.id" (click)="toggle(a)">
+                {{ a.active ? 'Masquer' : 'Remettre en ligne' }}
+              </button>
+              <button type="button" class="press rounded-full px-4 py-2 font-semibold text-[#b42323] hover:bg-argile-50" [disabled]="busyId() === a.id" (click)="remove(a)">Supprimer</button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  } @else {
+    @let list = demandes();
+    @if (list === null) {
+      <div class="mt-8 space-y-4" aria-busy="true">@for (i of [1, 2]; track i) { <div class="skeleton h-28 !rounded-[28px]"></div> }</div>
+    } @else if (!list.length) {
+      <p class="mt-8 rounded-[28px] border-2 border-dashed border-encre/20 p-10 text-center text-encre-soft">Aucune demande pour le moment. Elles apparaîtront ici dès qu'un client vous sollicite.</p>
+    } @else {
+      <ul class="mt-8 space-y-4">
+        @for (d of list; track d.id) {
+          <li class="rounded-[28px] border-2 border-encre/15 p-5">
+            <div class="flex flex-wrap items-center gap-3">
+              <app-statut-badge [statut]="d.statut" />
+              <span class="font-display text-xl font-bold">{{ d.clientNomComplet }}</span>
+              <span class="text-sm text-encre-soft">pour le {{ d.dateIntervention | date: "EEEE d MMMM 'à' HH:mm" }}</span>
+            </div>
+            @if (d.annonceTitre) {
+              <a [routerLink]="['/annonces', d.annonceId]" class="mt-2 inline-block text-sm font-semibold text-menthe-deep">{{ d.annonceTitre }}</a>
+            }
+            <p class="mt-2">{{ d.description }}</p>
+            <p class="mt-2 text-sm text-encre-soft">
+              @if (d.prixConvenu != null) { Prix convenu : <strong class="text-encre">{{ d.prixConvenu | price }}</strong> }
+              @if (d.prixFinal != null) { · Montant final : <strong class="text-encre">{{ d.prixFinal | price }}</strong> }
+            </p>
+
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+              <a [routerLink]="['/messages', d.clientId]" class="btn btn-white !py-2 !px-4 !text-base">Message</a>
+              @if (d.statut === 'EN_ATTENTE') {
+                <button type="button" class="btn btn-menthe !py-2 !px-4 !text-base" [disabled]="busyId() === d.id" (click)="accept(d)">Accepter</button>
+                <button type="button" class="press rounded-full px-4 py-2 font-semibold text-[#b42323] hover:bg-argile-50" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>
+              }
+              @if (d.statut === 'ACCEPTEE') {
+                @if (finishing() === d.id) {
+                  <form class="flex flex-wrap items-center gap-2" (ngSubmit)="confirmFinish(d)">
+                    <label class="flex items-center gap-2">
+                      <span class="font-semibold">Montant final</span>
+                      <input type="number" name="prixFinal" min="0" [(ngModel)]="prixFinal" class="field !mt-0 !py-2 w-32" />
+                      <span>MAD</span>
+                    </label>
+                    <button type="submit" class="btn btn-citron !py-2 !px-4 !text-base" [disabled]="busyId() === d.id">Clôturer</button>
+                    <button type="button" class="font-semibold px-2" (click)="finishing.set(null)">Annuler</button>
+                  </form>
+                } @else {
+                  <button type="button" class="btn btn-citron !py-2 !px-4 !text-base" (click)="startFinish(d)">Marquer comme terminée</button>
+                }
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

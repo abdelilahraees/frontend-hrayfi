@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { HomePage } from './pages/home/home.component';
-import { guestGuard } from './core/auth/auth.guards';
+import { authGuard, guestGuard, roleGuard } from './core/auth/auth.guards';
 
 // Home is eager (first paint); every other page is its own lazily loaded chunk.
 export const routes: Routes = [
@@ -56,6 +56,24 @@ export const routes: Routes = [
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/auth/register.page').then((m) => m.RegisterPage),
     title: 'Inscription — Hrayfi',
+  },
+  {
+    path: 'espace/artisan',
+    canActivate: [roleGuard('ARTISAN')],
+    loadComponent: () => import('./pages/espace/artisan-dashboard.page').then((m) => m.ArtisanDashboardPage),
+    title: 'Mon espace artisan — Hrayfi',
+  },
+  {
+    path: 'espace/artisan/annonces/nouvelle',
+    canActivate: [roleGuard('ARTISAN')],
+    loadComponent: () => import('./pages/espace/annonce-form.page').then((m) => m.AnnonceFormPage),
+    title: 'Publier une annonce — Hrayfi',
+  },
+  {
+    path: 'espace/artisan/annonces/:id/modifier',
+    canActivate: [roleGuard('ARTISAN')],
+    loadComponent: () => import('./pages/espace/annonce-form.page').then((m) => m.AnnonceFormPage),
+    title: 'Modifier une annonce — Hrayfi',
   },
   // Pages légales… pas encore construites
   {
