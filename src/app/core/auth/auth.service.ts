@@ -34,7 +34,8 @@ export class AuthService {
   });
 
   constructor() {
-    if (this.session()) this.loadMe().subscribe();
+    // Différé : l'intercepteur HTTP injecte ce service, qui n'est pas encore construit ici
+    if (this.session()) queueMicrotask(() => this.loadMe().subscribe());
   }
 
   login(email: string, password: string): Observable<Me> {
