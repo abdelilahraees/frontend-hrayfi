@@ -124,24 +124,46 @@
     </div>
 
     <!-- Avis -->
-    <div class="mt-16 grid lg:grid-cols-12 gap-10">
-      <div class="lg:col-span-7">
-        <h2 class="text-4xl">Avis des clients <span class="text-encre-soft text-2xl">({{ avisTotal() }})</span></h2>
+    <div id="avis" class="mt-16 grid lg:grid-cols-12 gap-10 scroll-mt-24">
+      <aside class="lg:col-span-4 lg:order-2">
+        <div class="rounded-lg border border-encre/10 bg-chaux p-6 lg:sticky lg:top-24">
+          <p class="text-sm text-encre-soft">Note moyenne</p>
+          <p class="mt-1 font-display text-5xl tabular-nums">{{ a.nbAvis ? (a.noteMoyenne | number: '1.1-1') : '–' }}<span class="text-xl text-encre-soft"> / 5</span></p>
+          <app-stars class="mt-2" [value]="a.noteMoyenne" [showValue]="false" [size]="18" />
+          <p class="mt-2 text-sm text-encre-soft">D'après {{ avisTotal() }} avis de clients vérifiés.</p>
+          @if (monAvis(); as m) {
+            @if (!avisEditing()) {
+              <div class="mt-5 border-t border-encre/10 pt-5">
+                <p class="text-sm font-medium">Votre avis</p>
+                <app-stars class="mt-1" [value]="m.note" [showValue]="false" [size]="14" />
+                @if (m.commentaire) { <p class="mt-1 text-sm text-encre-soft line-clamp-3">{{ m.commentaire }}</p> }
+                <div class="mt-3 flex gap-4 text-sm font-medium">
+                  <button type="button" class="text-menthe-deep hover:underline" (click)="editAvis()">Modifier</button>
+                  <button type="button" class="text-[#a3321c] hover:underline" (click)="deleteAvis(m)">Supprimer</button>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </aside>
+
+      <div class="lg:col-span-8 lg:order-1">
+        <h2 class="text-3xl">Avis des clients <span class="text-encre-soft text-xl">({{ avisTotal() }})</span></h2>
 
         @if (isClient() && (!monAvis() || avisEditing())) {
           <form (ngSubmit)="submitAvis()" class="mt-6 rounded-lg border border-encre/15 bg-citron-50 p-6 space-y-4">
-            <p class="font-display text-2xl font-bold">{{ monAvis() ? 'Modifier mon avis' : 'Donner mon avis' }}</p>
+            <p class="font-display text-xl">{{ monAvis() ? 'Modifier mon avis' : 'Donner mon avis' }}</p>
             <app-star-input [(value)]="note" />
             <label class="block">
               <span class="sr-only">Commentaire</span>
               <textarea name="commentaire" rows="3" maxlength="2000" [(ngModel)]="commentaire" class="field resize-y bg-white"
                         placeholder="Qualité du travail, ponctualité, respect du prix…"></textarea>
             </label>
-            @if (avisError()) { <p role="alert" class="text-[#b42323] text-sm">{{ avisError() }}</p> }
+            @if (avisError()) { <p role="alert" class="text-[#a3321c] text-sm">{{ avisError() }}</p> }
             <div class="flex gap-3">
-              <button type="submit" class="btn btn-menthe !text-base" [disabled]="avisSending()">{{ avisSending() ? 'Publication…' : 'Publier' }}</button>
+              <button type="submit" class="btn btn-menthe" [disabled]="avisSending()">{{ avisSending() ? 'Publication…' : 'Publier' }}</button>
               @if (avisEditing()) {
-                <button type="button" class="btn btn-white !text-base" (click)="avisEditing.set(false)">Annuler</button>
+                <button type="button" class="btn btn-white" (click)="avisEditing.set(false)">Annuler</button>
               }
             </div>
           </form>
@@ -152,34 +174,27 @@
           </p>
         }
 
-        <ul class="mt-8 space-y-5">
+        <ul class="mt-6 divide-y divide-encre/10 border-y border-encre/10">
           @for (r of avis(); track r.id) {
-            <li class="rounded-lg border border-encre/10 p-5">
+            <li class="py-5">
               <div class="flex items-start gap-4">
-                <app-avatar [name]="r.clientNomComplet" [size]="44" />
+                <app-avatar [name]="r.clientNomComplet" [size]="42" />
                 <div class="flex-1">
-                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                     <span class="font-semibold">{{ r.clientNomComplet }}</span>
-                    <app-stars [value]="r.note" [showValue]="false" [size]="15" />
                     <span class="text-sm text-encre-soft">{{ r.createdAt | date: 'd MMMM y' }}</span>
                   </div>
+                  <app-stars class="mt-1" [value]="r.note" [showValue]="false" [size]="14" />
                   @if (r.commentaire) { <p class="mt-2 leading-relaxed whitespace-pre-line">{{ r.commentaire }}</p> }
-                  @if (r.clientId === auth.userId()) {
-                    <div class="mt-3 flex gap-4 text-sm font-semibold">
-                      <button type="button" class="text-menthe-deep" (click)="editAvis()">Modifier</button>
-                      <button type="button" class="text-[#b42323]" (click)="deleteAvis(r)">Supprimer</button>
-                    </div>
-                  }
                 </div>
               </div>
             </li>
           } @empty {
-            <li class="text-encre-soft">Pas encore d'avis. Soyez le premier à partager votre expérience.</li>
+            <li class="py-6 text-encre-soft">Pas encore d'avis. Soyez le premier à partager votre expérience.</li>
           }
         </ul>
-        @if (!avisLast()) {
-          <button type="button" class="btn btn-white mt-6" (click)="loadAvis(avisPage() + 1)">Voir plus d'avis</button>
-        }
+        <app-pager [page]="avisPage()" [totalPages]="avisPages()" [totalElements]="avisTotal()" [pageSize]="AVIS_PAR_PAGE"
+                   label="avis" (change)="loadAvis($event, true)" />
       </div>
     </div>
   </section>

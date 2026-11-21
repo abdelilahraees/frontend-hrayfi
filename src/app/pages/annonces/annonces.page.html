@@ -111,7 +111,7 @@
             <app-annonce-card [annonce]="a" class="enter-rise" />
           }
         </div>
-        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" (change)="goToPage($event)" />
+        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" [totalElements]="s.page.totalElements" [pageSize]="s.page.size" label="annonces" (change)="goToPage($event)" />
       } @else {
         <div class="rounded-lg border border-dashed border-encre/20 p-10 text-center">
           <p class="font-display text-2xl font-bold">Aucune annonce ne correspond.</p>

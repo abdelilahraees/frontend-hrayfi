@@ -96,8 +96,9 @@
             <a routerLink="/annonces" class="dash-btn dash-btn-primary mt-5">Voir les annonces</a>
           </div>
         } @else {
+          @let pg = demandesPage();
           <ul class="divide-y divide-encre/[0.07]">
-            @for (d of demandesFiltrees() ?? []; track d.id) {
+            @for (d of pg.items; track d.id) {
               @let e = etape(d);
               <li class="px-5 py-4">
                 <div class="flex flex-col sm:flex-row sm:items-start gap-3">
@@ -165,6 +166,8 @@
               </li>
             }
           </ul>
+          <app-pager compact [page]="pg.page" [totalPages]="pg.totalPages" [totalElements]="pg.totalElements" [pageSize]="PAR_PAGE"
+                     label="demandes" (change)="pageDemandes.set($event)" />
         }
       </section>
 
@@ -240,7 +243,8 @@
           <h2 id="avis-titre" class="dash-title flex items-center gap-2"><app-icon name="star" [size]="16" class="text-menthe-deep" />Mes avis</h2>
         </div>
         <ul class="divide-y divide-encre/[0.07]">
-          @for (a of avis(); track a.id) {
+          @let ap = avisPage();
+          @for (a of ap.items; track a.id) {
             <li class="px-5 py-3">
               <a [routerLink]="['/annonces', a.annonceId]" class="block text-sm font-semibold leading-snug hover:underline">{{ a.annonceTitre }}</a>
               <div class="mt-1"><app-stars [value]="a.note" [showValue]="false" [size]="13" /></div>
@@ -250,6 +254,8 @@
             <li class="px-5 py-6 text-sm text-encre-soft">Vous n'avez pas encore donné d'avis.</li>
           }
         </ul>
+        <app-pager compact [page]="ap.page" [totalPages]="ap.totalPages" [totalElements]="ap.totalElements" [pageSize]="AVIS_PAR_PAGE"
+                   label="avis" (change)="pageAvis.set($event)" />
       </section>
     </div>
   </div>
