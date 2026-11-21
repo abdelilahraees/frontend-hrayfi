@@ -1,4 +1,4 @@
-import { Demande, StatutDemande } from './models';
+import { Annonce, Demande, Me, StatutDemande } from './models';
 
 export interface MonthTotal {
   /** Libellé court du mois : "janv.", "févr."… */
@@ -85,4 +85,80 @@ export function downloadCsv(demandes: Demande[], filename: string) {
   const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+/** Salutation selon l'heure, en arabe et en français. */
+export function salutation(date = new Date()): { ar: string; fr: string } {
+  return date.getHours() < 17 ? { ar: 'صباح الخير', fr: 'Bonjour' } : { ar: 'مساء الخير', fr: 'Bonsoir' };
+}
+
+export interface JourAgenda {
+  date: Date;
+  today: boolean;
+  demandes: Demande[];
+}
+
+/** Les 7 jours à partir d'aujourd'hui, avec les interventions acceptées prévues ce jour-là. */
+export function semaine(demandes: Demande[], from = new Date()): JourAgenda[] {
+  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const jour = demandes
+      .filter((d) => d.statut === 'ACCEPTEE' && sameDay(new Date(d.dateIntervention), date))
+      .sort((a, b) => a.dateIntervention.localeCompare(b.dateIntervention));
+    return { date, today: i === 0, demandes: jour };
+  });
+}
+
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+export interface CritereProfil {
+  label: string;
+  ok: boolean;
+  /** Lien pour corriger le point manquant */
+  link: string;
+  queryParams?: Record<string, string>;
+}
+
+/** Points qui rendent un profil d'artisan convaincant, et score sur 100. */
+export function qualiteProfil(me: Me | null, annonces: Annonce[]): { score: number; criteres: CritereProfil[] } {
+  const actives = annonces.filter((a) => a.active);
+  const criteres: CritereProfil[] = [
+    { label: 'Présentation rédigée', ok: (me?.description?.trim().length ?? 0) >= 40, link: '/espace/profil' },
+    { label: 'Ville et tarif horaire renseignés', ok: !!me?.ville && me?.tarifHoraire != null, link: '/espace/profil' },
+    { label: 'Au moins une annonce en ligne', ok: actives.length > 0, link: '/espace/artisan/annonces/nouvelle' },
+    { label: '3 photos ou plus sur une annonce', ok: annonces.some((a) => a.images.length >= 3), link: '/espace/artisan', queryParams: { onglet: 'annonces' } },
+    { label: 'Premier avis client reçu', ok: annonces.some((a) => a.nbAvis > 0), link: '/espace/artisan', queryParams: { onglet: 'demandes' } },
+  ];
+  return { score: Math.round((criteres.filter((c) => c.ok).length / criteres.length) * 100), criteres };
+}
+
+/** Étape atteinte par une demande côté client : 0 envoyée, 1 acceptée, 2 terminée, 3 évaluée. Refusée : -1. */
+export function etapeDemande(d: Demande, evaluee: boolean): number {
+  if (d.statut === 'REFUSEE') return -1;
+  if (d.statut === 'EN_ATTENTE') return 0;
+  if (d.statut === 'ACCEPTEE') return 1;
+  return evaluee ? 3 : 2;
+}
+
+export interface ArtisanConnu {
+  id: number;
+  nom: string;
+  annonceId: number | null;
+  interventions: number;
+  derniere: string;
+}
+
+/** Artisans avec qui le client a déjà travaillé ou échangé une demande, du plus récent au plus ancien. */
+export function mesArtisans(demandes: Demande[]): ArtisanConnu[] {
+  const map = new Map<number, ArtisanConnu>();
+  for (const d of demandes) {
+    const a = map.get(d.artisanId) ?? { id: d.artisanId, nom: d.artisanNomComplet, annonceId: d.annonceId, interventions: 0, derniere: d.dateIntervention };
+    if (d.statut === 'TERMINEE') a.interventions++;
+    if (d.dateIntervention > a.derniere) a.derniere = d.dateIntervention;
+    map.set(d.artisanId, a);
+  }
+  return [...map.values()].sort((a, b) => b.derniere.localeCompare(a.derniere));
 }

@@ -42,7 +42,7 @@ import { AuthVisualComponent } from './auth-visual.component';
             </label>
 
             @if (error()) {
-              <p role="alert" class="enter-rise rounded-2xl border-2 border-[#d23c3c]/30 bg-argile-50 px-4 py-3 text-[15px]">
+              <p role="alert" class="enter-rise rounded-lg border border-[#a3321c]/30 bg-argile-50 px-4 py-3 text-[15px]">
                 {{ error() }}
               </p>
             }

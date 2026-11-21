@@ -9,9 +9,10 @@ import { Annonce, ArtisanDashboard, Demande, StatutDemande } from '../../core/mo
 import { AnnonceService } from '../../core/services/annonce.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
-import { TriDemandes, countByStatut, downloadCsv, monthTrend, monthlyTotals, searchDemandes, upcoming } from '../../core/dashboard-stats';
+import { TriDemandes, countByStatut, downloadCsv, monthTrend, monthlyTotals, qualiteProfil, salutation, searchDemandes, semaine, upcoming } from '../../core/dashboard-stats';
 import { BarChartComponent } from '../../ui/bar-chart.component';
-import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
+import { AvatarComponent } from '../../ui/avatar.component';
+import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 import { IconComponent } from '../../ui/icon.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarsComponent } from '../../ui/stars.component';
@@ -24,7 +25,7 @@ type Filtre = StatutDemande | 'TOUTES';
 @Component({
   selector: 'app-artisan-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './artisan-dashboard.page.html',
 })
 export class ArtisanDashboardPage {
@@ -61,16 +62,29 @@ export class ArtisanDashboardPage {
   protected readonly FILTRES: Filtre[] = ['TOUTES', ...this.ORDRE];
   protected readonly today = new Date();
 
-  protected readonly nav = computed<DashNavItem[]>(() => {
-    const o = this.ongletActif();
-    return [
-      { label: "Vue d'ensemble", icon: 'home', link: '/espace/artisan', active: o === 'apercu' },
-      { label: 'Demandes', icon: 'inbox', link: '/espace/artisan', queryParams: { onglet: 'demandes' }, active: o === 'demandes', badge: this.stats()?.demandesEnAttente },
-      { label: 'Mes annonces', icon: 'list', link: '/espace/artisan', queryParams: { onglet: 'annonces' }, active: o === 'annonces' },
-      { label: 'Messages', icon: 'message', link: '/messages' },
-      { label: 'Profil', icon: 'user', link: '/espace/profil' },
-    ];
+  protected readonly titre = computed(() => ({ apercu: "Vue d'ensemble", demandes: 'Demandes', annonces: 'Mes annonces' })[this.ongletActif()]);
+  protected readonly salut = salutation();
+
+  /** Vue des demandes : liste détaillée ou tableau par statut (kanban) */
+  protected readonly vue = signal<'liste' | 'tableau'>('liste');
+  protected readonly COLONNES: StatutDemande[] = ['EN_ATTENTE', 'ACCEPTEE', 'TERMINEE'];
+
+  protected readonly agenda = computed(() => semaine(this.demandes() ?? []));
+  protected readonly qualite = computed(() => qualiteProfil(this.auth.user(), this.annonces() ?? []));
+  /** Phrase de résumé du bandeau d'accueil */
+  protected readonly resume = computed(() => {
+    const attente = this.stats()?.demandesEnAttente ?? 0;
+    const auj = this.agenda()[0]?.demandes.length ?? 0;
+    const sem = this.agenda().reduce((n, j) => n + j.demandes.length, 0);
+    const demandes = attente ? `${attente} demande${attente > 1 ? 's' : ''} à traiter.` : 'Aucune demande en attente.';
+    const agenda = auj
+      ? `${auj} intervention${auj > 1 ? 's' : ''} aujourd'hui.`
+      : sem ? `${sem} intervention${sem > 1 ? 's' : ''} cette semaine.` : 'Agenda libre cette semaine.';
+    return `${demandes} ${agenda}`;
   });
+  protected colonne(st: StatutDemande) {
+    return (this.demandesFiltrees() ?? []).filter((d) => d.statut === st);
+  }
 
   protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
   protected readonly tendance = computed(() => monthTrend(this.demandes() ?? []));

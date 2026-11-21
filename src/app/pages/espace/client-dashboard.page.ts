@@ -9,21 +9,21 @@ import { AvisService } from '../../core/services/avis.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
 import { MessageService } from '../../core/services/message.service';
-import { TriDemandes, countByStatut, downloadCsv, monthTrend, monthlyTotals, searchDemandes, upcoming } from '../../core/dashboard-stats';
+import { TriDemandes, countByStatut, downloadCsv, etapeDemande, mesArtisans, monthTrend, monthlyTotals, salutation, searchDemandes, upcoming } from '../../core/dashboard-stats';
 import { AvatarComponent } from '../../ui/avatar.component';
 import { BarChartComponent } from '../../ui/bar-chart.component';
-import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
+import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 import { IconComponent } from '../../ui/icon.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarInputComponent } from '../../ui/star-input.component';
 import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
-import { STATUTS, StatutBadgeComponent } from '../../ui/statut-badge.component';
+import { STATUTS } from '../../ui/statut-badge.component';
 
 @Component({
   selector: 'app-client-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent],
   templateUrl: './client-dashboard.page.html',
 })
 export class ClientDashboardPage {
@@ -39,17 +39,19 @@ export class ClientDashboardPage {
   protected readonly conversations = signal<Conversation[]>([]);
 
   protected readonly today = new Date();
-  protected readonly nav: DashNavItem[] = [
-    { label: "Vue d'ensemble", icon: 'home', link: '/espace/client', active: true },
-    { label: 'Trouver un artisan', icon: 'search', link: '/annonces' },
-    { label: 'Messages', icon: 'message', link: '/messages' },
-    { label: 'Profil', icon: 'user', link: '/espace/profil' },
-  ];
+  protected readonly salut = salutation();
+  /** Étapes du suivi d'une demande */
+  protected readonly ETAPES = ['Envoyée', 'Acceptée', 'Terminée', 'Évaluée'];
 
   protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
   protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
   protected readonly aVenir = computed(() => upcoming(this.demandes() ?? [], 4));
   protected readonly tendance = computed(() => monthTrend(this.demandes() ?? []));
+  protected readonly prochaine = computed(() => this.aVenir()[0] ?? null);
+  protected readonly artisans = computed(() => mesArtisans(this.demandes() ?? []).slice(0, 5));
+  protected etape(d: Demande) {
+    return etapeDemande(d, this.evaluated().has(d.id));
+  }
 
   /** Filtres de la liste « Mes demandes » */
   protected readonly STATUTS = STATUTS;

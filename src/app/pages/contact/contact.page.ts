@@ -2,7 +2,6 @@ import { Component, ElementRef, Injector, afterNextRender, computed, effect, inj
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
-import { StickerComponent, StickerName } from '../../ui/sticker.component';
 import { SuccessPopComponent } from '../../ui/success-pop.component';
 
 const CONTACT_EMAIL = 'contact@hrayfi.ma';
@@ -32,7 +31,7 @@ const SUBJECTS: Record<Role, { value: string; needsDetails: boolean }[]> = {
 @Component({
   selector: 'app-contact-page',
   standalone: true,
-  imports: [ReactiveFormsModule, NgTemplateOutlet, StickerComponent, SuccessPopComponent],
+  imports: [ReactiveFormsModule, NgTemplateOutlet, SuccessPopComponent],
   templateUrl: './contact.page.html',
 })
 export class ContactPage {
@@ -42,13 +41,13 @@ export class ContactPage {
 
   protected readonly email = CONTACT_EMAIL;
   protected readonly messageMax = MESSAGE_MAX;
-  protected readonly trades: { label: string; sticker: StickerName }[] = [
-    { label: 'Plomberie', sticker: 'wrench' },
-    { label: 'Électricité', sticker: 'bolt' },
-    { label: 'Menuiserie', sticker: 'saw' },
-    { label: 'Peinture', sticker: 'roller' },
-    { label: 'Maçonnerie', sticker: 'bricks' },
-    { label: 'Climatisation', sticker: 'snow' },
+  protected readonly trades: { label: string }[] = [
+    { label: 'Plomberie' },
+    { label: 'Électricité' },
+    { label: 'Menuiserie' },
+    { label: 'Peinture' },
+    { label: 'Maçonnerie' },
+    { label: 'Climatisation' },
   ];
   protected readonly cities = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès', 'Agadir', 'Meknès', 'Oujda', 'Kénitra', 'Tétouan'];
   protected readonly timings = ['Urgent, sous 48 h', 'Dans le mois', 'Je me renseigne'];

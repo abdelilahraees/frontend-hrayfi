@@ -13,30 +13,30 @@ import { NotificationService } from '../../core/services/notification.service';
   imports: [DatePipe],
   host: { class: 'relative' },
   template: `
-    <button type="button" (click)="toggle()" class="press relative grid place-items-center w-11 h-11 rounded-full hover:bg-menthe-50"
+    <button type="button" (click)="toggle()" class="relative grid place-items-center w-10 h-10 rounded-md text-encre-soft hover:text-encre hover:bg-chaux"
             [attr.aria-expanded]="open()" aria-haspopup="true"
             [attr.aria-label]="'Notifications' + (unread() ? ', ' + unread() + ' non lues' : '')">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linejoin="round" d="M6 16V11a6 6 0 1112 0v5l2 2H4l2-2z" />
         <path stroke-linecap="round" d="M10 20a2 2 0 004 0" />
       </svg>
       @if (unread()) {
-        <span class="absolute top-1 right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-citron border-2 border-encre text-[11px] font-bold leading-none">{{ unread() }}</span>
+        <span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-citron text-[10px] font-semibold text-encre leading-none ring-2 ring-white">{{ unread() }}</span>
       }
     </button>
 
     @if (open()) {
       <div animate.enter="enter-drop" animate.leave="leave-lift"
-           class="absolute right-0 mt-2 w-[22rem] max-h-[28rem] overflow-y-auto rounded-3xl border-2 border-encre bg-white shadow-[0_6px_0_var(--color-encre)] z-50">
+           class="absolute right-0 mt-2 w-[22rem] max-h-[28rem] overflow-y-auto rounded-lg border border-encre/10 bg-white shadow-[0_12px_32px_-8px_rgb(23_35_31/0.25)] z-50">
         <div class="flex items-center justify-between px-5 pt-4 pb-2">
-          <p class="font-display font-bold text-xl">Notifications</p>
+          <p class="font-display text-lg">Notifications</p>
           @if (unread()) {
             <button type="button" (click)="markAll()" class="text-sm font-semibold text-menthe-deep">Tout marquer lu</button>
           }
         </div>
         @for (n of items(); track n.id) {
           <button type="button" (click)="openItem(n)"
-                  class="w-full text-left px-5 py-3 border-t-2 border-encre/5 hover:bg-menthe-50 flex gap-3">
+                  class="w-full text-left px-5 py-3 border-t border-encre/[0.07] hover:bg-chaux flex gap-3">
             <span class="mt-2 w-2.5 h-2.5 shrink-0 rounded-full" [class.bg-menthe]="!n.lu" [class.bg-transparent]="n.lu"></span>
             <span>
               <span class="block font-semibold">{{ n.titre }}</span>

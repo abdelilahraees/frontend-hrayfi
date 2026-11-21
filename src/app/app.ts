@@ -23,5 +23,7 @@ export class App {
   );
   /** Espaces connectés (tableaux de bord, messagerie) : pied de page réduit au lieu du pied de page vitrine. */
   protected readonly appPage = computed(() => /^\/(espace|messages)(\/|\?|$)/.test(this.url()));
+  /** Espaces client / artisan et messagerie : ils ont leur propre cadre applicatif (barre latérale), sans en-tête ni pied de page du site. */
+  protected readonly shellPage = computed(() => /^\/(espace|messages)(\/|\?|$)/.test(this.url()));
   protected readonly year = new Date().getFullYear();
 }

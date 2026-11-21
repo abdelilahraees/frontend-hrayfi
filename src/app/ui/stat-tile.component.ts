@@ -17,7 +17,7 @@ import { IconComponent, IconName } from './icon.component';
     <p class="mt-2 text-[26px] font-semibold leading-none tracking-tight tabular-nums" [class]="tone()">{{ value() }}</p>
     <div class="mt-2.5 flex items-center gap-2 text-xs text-encre-soft">
       @if (trend() != null) {
-        <span class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold tabular-nums" [class]="trendCls()">
+        <span class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 font-semibold tabular-nums" [class]="trendCls()">
           <app-icon [name]="trend()! < 0 ? 'trendDown' : 'trendUp'" [size]="12" [stroke]="2.2" />{{ trendLabel() }}
         </span>
       }

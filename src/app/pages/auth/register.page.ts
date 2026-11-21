@@ -100,7 +100,7 @@ type Profil = 'CLIENT' | 'ARTISAN';
             </div>
 
             @if (error()) {
-              <p role="alert" class="enter-rise mt-6 rounded-2xl border-2 border-[#d23c3c]/30 bg-argile-50 px-4 py-3 text-[15px]">
+              <p role="alert" class="enter-rise mt-6 rounded-lg border border-[#a3321c]/30 bg-argile-50 px-4 py-3 text-[15px]">
                 {{ error() }}
               </p>
             }

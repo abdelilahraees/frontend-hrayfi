@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { StickerComponent, StickerName } from '../../ui/sticker.component';
 
 export type ServiceKey =
   | 'plomberie'
@@ -16,13 +15,14 @@ type Service = {
   description: string;
   count: string;
   image: string;
-  sticker: StickerName;
+  /** Nom du métier en arabe */
+  ar: string;
 };
 
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [RouterLink, StickerComponent],
+  imports: [RouterLink],
   templateUrl: './services.component.html',
 })
 export class ServicesComponent {
@@ -33,7 +33,7 @@ export class ServicesComponent {
       description: 'Fuites, chauffe-eau, sanitaires et dépannage 7 jours sur 7.',
       count: '420',
       image: '/img/service-plomberie.jpg',
-      sticker: 'wrench',
+      ar: 'سباكة',
     },
     {
       key: 'electricite',
@@ -41,7 +41,7 @@ export class ServicesComponent {
       description: 'Tableaux, prises, éclairage et mise aux normes.',
       count: '380',
       image: '/img/service-electricite.jpg',
-      sticker: 'bolt',
+      ar: 'كهرباء',
     },
     {
       key: 'menuiserie',
@@ -49,7 +49,7 @@ export class ServicesComponent {
       description: 'Placards, portes, cuisines et meubles sur mesure.',
       count: '290',
       image: '/img/service-menuiserie.jpg',
-      sticker: 'saw',
+      ar: 'نجارة',
     },
     {
       key: 'peinture',
@@ -57,7 +57,7 @@ export class ServicesComponent {
       description: 'Murs intérieurs, façades, tadelakt et enduits décoratifs.',
       count: '310',
       image: '/img/service-peinture.jpg',
-      sticker: 'roller',
+      ar: 'صباغة',
     },
     {
       key: 'maconnerie',
@@ -65,7 +65,7 @@ export class ServicesComponent {
       description: 'Murs, dalles, extensions et rénovation complète.',
       count: '260',
       image: '/img/service-maconnerie.jpg',
-      sticker: 'bricks',
+      ar: 'بناء',
     },
     {
       key: 'climatisation',
@@ -73,7 +73,7 @@ export class ServicesComponent {
       description: 'Pose, recharge et entretien de climatiseurs.',
       count: '180',
       image: '/img/service-climatisation.jpg',
-      sticker: 'snow',
+      ar: 'تكييف',
     },
   ];
 }

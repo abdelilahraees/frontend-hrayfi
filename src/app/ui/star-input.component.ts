@@ -10,7 +10,7 @@ import { Component, model, signal } from '@angular/core';
         <button type="button" role="radio" [attr.aria-checked]="value() === n" [attr.aria-label]="n + ' sur 5'"
                 (click)="value.set(n)" (mouseenter)="hover.set(n)"
                 class="press text-[34px] leading-none transition-colors"
-                [class.text-[#e9b800]]="n <= (hover() || value())"
+                [class.text-citron]="n <= (hover() || value())"
                 [class.text-encre/15]="n > (hover() || value())">★</button>
       }
     </div>

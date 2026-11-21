@@ -21,7 +21,7 @@ import { StarsComponent } from '../../ui/stars.component';
         <a routerLink="/artisans" class="btn btn-citron mt-8">Voir les artisans</a>
       </section>
     } @else if (artisan(); as a) {
-      <section class="bg-menthe-50 border-b-2 border-encre/10">
+      <section class="bg-chaux border-b border-encre/10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row gap-6 sm:items-center">
           <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="96" />
           <div class="flex-1">
@@ -53,7 +53,7 @@ import { StarsComponent } from '../../ui/stars.component';
         <h2 class="mt-14 text-3xl">Avis reçus <span class="text-encre-soft text-2xl">({{ a.nbAvis }})</span></h2>
         <ul class="mt-6 grid md:grid-cols-2 gap-5">
           @for (r of avis(); track r.id) {
-            <li class="rounded-[28px] border-2 border-encre/10 p-5">
+            <li class="rounded-lg border border-encre/10 p-5">
               <div class="flex items-center gap-3">
                 <app-avatar [name]="r.clientNomComplet" [size]="40" />
                 <div>
@@ -71,7 +71,7 @@ import { StarsComponent } from '../../ui/stars.component';
         </ul>
       </section>
     } @else {
-      <section class="max-w-7xl mx-auto px-4 py-10" aria-busy="true"><div class="skeleton h-32 !rounded-[28px]"></div></section>
+      <section class="max-w-7xl mx-auto px-4 py-10" aria-busy="true"><div class="skeleton h-32 !rounded-lg"></div></section>
     }
   `,
 })
