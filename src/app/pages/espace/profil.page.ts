@@ -4,12 +4,13 @@ import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
 import { METIERS, VILLES } from '../../core/metiers';
 import { Disponibilite, Me } from '../../core/models';
+import { CarteComponent } from '../../ui/carte.component';
 import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 
 @Component({
   selector: 'app-profil-page',
   standalone: true,
-  imports: [ReactiveFormsModule, DashboardShellComponent],
+  imports: [ReactiveFormsModule, CarteComponent, DashboardShellComponent],
   template: `
     <app-dashboard-shell active="profil" title="Mon profil">
      <div class="max-w-3xl">
@@ -25,6 +26,10 @@ import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
           <label class="block"><span class="text-sm font-medium">Prénom</span><input formControlName="prenom" class="field" /></label>
           <label class="block"><span class="text-sm font-medium">Nom</span><input formControlName="nom" class="field" /></label>
         </div>
+        <label class="block"><span class="text-sm font-medium">Téléphone</span>
+          <input type="tel" formControlName="telephone" inputmode="tel" class="field sm:max-w-xs" placeholder="06 12 34 56 78" />
+          <span class="mt-1 block text-[13px] text-encre-soft">{{ isArtisan() ? 'Visible seulement par les clients connectés, pour vous écrire sur WhatsApp.' : 'Facultatif : utile à l’artisan le jour de l’intervention.' }}</span>
+        </label>
 
         @if (isArtisan()) {
           <div class="grid sm:grid-cols-2 gap-5">
@@ -48,6 +53,25 @@ import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
           <label class="block"><span class="text-sm font-medium">Présentation</span>
             <textarea formControlName="description" rows="5" class="field resize-y"
                       placeholder="Votre expérience, vos spécialités, votre zone d'intervention…"></textarea></label>
+
+          <fieldset>
+            <legend class="text-sm font-medium">Position sur la carte</legend>
+            <p class="mt-1 text-[13px] text-encre-soft">
+              Les clients qui cherchent « autour de moi » vous trouvent grâce à ce point. Cliquez sur la carte pour placer votre atelier
+              ou le centre de votre zone d'intervention.
+            </p>
+            <app-carte class="mt-3 h-72 overflow-hidden rounded-md border border-encre/15" editable ariaLabel="Choisir ma position"
+                       [position]="positionAffichee()" (choix)="choisirPosition($event)" />
+            <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-[13px]">
+              <p [class]="positionApprox() && !nouvellePosition() ? 'text-[#9a6a00]' : 'text-encre-soft'">
+                @if (nouvellePosition()) { Nouvelle position choisie : pensez à enregistrer. }
+                @else if (!positionAffichee()) { Aucune position : indiquez votre ville ou cliquez sur la carte. }
+                @else if (positionApprox()) { Position approximative (centre de votre ville). Précisez-la pour apparaître au bon endroit. }
+                @else { Position enregistrée. }
+              </p>
+              <button type="button" class="font-medium text-menthe-deep hover:underline" (click)="maPosition()">Utiliser ma position actuelle</button>
+            </div>
+          </fieldset>
         } @else {
           <label class="block"><span class="text-sm font-medium">Adresse</span><input formControlName="adresse" class="field" /></label>
           <label class="block"><span class="text-sm font-medium">Préférences</span>
@@ -79,9 +103,16 @@ export class ProfilPage {
   protected readonly message = signal<string | null>(null);
   protected readonly isError = signal(false);
 
+  /** Position enregistrée, et position choisie sur la carte mais pas encore enregistrée */
+  private readonly positionEnregistree = signal<[number, number] | null>(null);
+  protected readonly positionApprox = signal(true);
+  protected readonly nouvellePosition = signal<[number, number] | null>(null);
+  protected readonly positionAffichee = computed(() => this.nouvellePosition() ?? this.positionEnregistree());
+
   protected readonly form = this.fb.group({
     prenom: ['', Validators.required],
     nom: ['', Validators.required],
+    telephone: [''],
     adresse: [''],
     preferences: [''],
     metier: [''],
@@ -99,6 +130,7 @@ export class ProfilPage {
     this.form.patchValue({
       prenom: me.prenom,
       nom: me.nom,
+      telephone: me.telephone ? '0' + me.telephone.slice(4) : '',
       adresse: me.adresse ?? '',
       preferences: me.preferences ?? '',
       metier: me.metier ?? '',
@@ -107,6 +139,24 @@ export class ProfilPage {
       description: me.description ?? '',
       disponibilite: me.disponibilite ?? 'DISPONIBLE',
     });
+    this.positionEnregistree.set(me.latitude != null && me.longitude != null ? [me.latitude, me.longitude] : null);
+    this.positionApprox.set(me.positionApprox ?? true);
+    this.nouvellePosition.set(null);
+  }
+
+  protected choisirPosition(p: [number, number]) {
+    this.nouvellePosition.set([Math.round(p[0] * 1e5) / 1e5, Math.round(p[1] * 1e5) / 1e5]);
+  }
+
+  protected maPosition() {
+    navigator.geolocation?.getCurrentPosition(
+      (p) => this.choisirPosition([p.coords.latitude, p.coords.longitude]),
+      () => {
+        this.isError.set(true);
+        this.message.set('Position introuvable : autorisez la localisation ou cliquez sur la carte.');
+      },
+      { timeout: 10000 },
+    );
   }
 
   protected save() {
@@ -117,11 +167,13 @@ export class ProfilPage {
     }
     const v = this.form.getRawValue();
     const body = this.isArtisan()
-      ? { prenom: v.prenom, nom: v.nom, metier: v.metier || null, ville: v.ville, tarifHoraire: v.tarifHoraire, description: v.description, disponibilite: v.disponibilite }
-      : { prenom: v.prenom, nom: v.nom, adresse: v.adresse, preferences: v.preferences };
+      ? { prenom: v.prenom, nom: v.nom, telephone: v.telephone, metier: v.metier || null, ville: v.ville, tarifHoraire: v.tarifHoraire, description: v.description, disponibilite: v.disponibilite,
+          latitude: this.nouvellePosition()?.[0], longitude: this.nouvellePosition()?.[1] }
+      : { prenom: v.prenom, nom: v.nom, telephone: v.telephone, adresse: v.adresse, preferences: v.preferences };
     this.saving.set(true);
     this.auth.updateProfile(body).subscribe({
-      next: () => {
+      next: (me) => {
+        this.fill(me);
         this.saving.set(false);
         this.isError.set(false);
         this.message.set('Profil enregistré.');

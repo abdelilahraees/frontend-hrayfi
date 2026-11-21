@@ -71,6 +71,7 @@
             <div class="flex flex-col gap-3">
               <button type="button" class="btn btn-menthe w-full" (click)="contact()">Discuter et négocier le prix</button>
               <button type="button" class="btn btn-white w-full" (click)="openBooking()">Demander une intervention</button>
+              <app-contact-whatsapp [artisanId]="a.artisanId" [sujet]="a.titre" libelle="Écrire sur WhatsApp" classe="w-full" />
             </div>
           }
 
@@ -130,7 +131,7 @@
           <p class="text-sm text-encre-soft">Note moyenne</p>
           <p class="mt-1 font-display text-5xl tabular-nums">{{ a.nbAvis ? (a.noteMoyenne | number: '1.1-1') : '–' }}<span class="text-xl text-encre-soft"> / 5</span></p>
           <app-stars class="mt-2" [value]="a.noteMoyenne" [showValue]="false" [size]="18" />
-          <p class="mt-2 text-sm text-encre-soft">D'après {{ avisTotal() }} avis de clients vérifiés.</p>
+          <p class="mt-2 text-sm text-encre-soft">D'après {{ avisTotal() }} avis. Le badge « Client vérifié » signale un client dont l'intervention a eu lieu via Hrayfi.</p>
           @if (monAvis(); as m) {
             @if (!avisEditing()) {
               <div class="mt-5 border-t border-encre/10 pt-5">
@@ -181,7 +182,14 @@
                 <app-avatar [name]="r.clientNomComplet" [size]="42" />
                 <div class="flex-1">
                   <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <span class="font-semibold">{{ r.clientNomComplet }}</span>
+                    <span class="flex items-center gap-2">
+                      <span class="font-semibold">{{ r.clientNomComplet }}</span>
+                      @if (r.verifie) {
+                        <span class="inline-flex items-center gap-1 rounded-full bg-menthe-50 px-2 py-0.5 text-xs font-medium text-menthe-deep" title="A fait appel à cet artisan via Hrayfi">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10" /></svg>Client vérifié
+                        </span>
+                      }
+                    </span>
                     <span class="text-sm text-encre-soft">{{ r.createdAt | date: 'd MMMM y' }}</span>
                   </div>
                   <app-stars class="mt-1" [value]="r.note" [showValue]="false" [size]="14" />

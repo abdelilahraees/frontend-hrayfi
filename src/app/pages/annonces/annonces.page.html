@@ -105,6 +105,17 @@
       <p class="mb-5 text-encre-soft" aria-live="polite">
         <strong class="text-encre">{{ s.page.totalElements }}</strong> annonce{{ s.page.totalElements > 1 ? 's' : '' }}
       </p>
+      @if (sponsorisees().length) {
+        <section class="mb-8 rounded-lg bg-citron-50/70 p-4 sm:p-5" aria-labelledby="sponso-titre">
+          <h2 id="sponso-titre" class="flex items-baseline justify-between gap-3 font-sans text-[15px] font-semibold">
+            Mises en avant
+            <span class="text-xs font-normal text-encre-soft">Annonces sponsorisées par les artisans</span>
+          </h2>
+          <div class="mt-4 grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            @for (a of sponsorisees(); track a.id) { <app-annonce-card [annonce]="a" /> }
+          </div>
+        </section>
+      }
       @if (s.page.content.length) {
         <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
           @for (a of s.page.content; track a.id) {

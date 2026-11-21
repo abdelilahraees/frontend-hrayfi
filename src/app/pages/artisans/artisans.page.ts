@@ -26,8 +26,18 @@ const DISPO: Record<string, { label: string; cls: string }> = {
     @let s = state();
     <section class="bg-chaux border-b border-encre/10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-        <h1 class="text-5xl sm:text-6xl">Les artisans</h1>
-        <p class="mt-3 text-lg text-encre-soft">Profils, spécialités et réputation d'après les avis clients.</p>
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h1 class="text-5xl sm:text-6xl">Les artisans</h1>
+            <p class="mt-3 text-lg text-encre-soft">Profils, spécialités et réputation d'après les avis clients.</p>
+          </div>
+          <a routerLink="/carte" class="btn btn-white self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linejoin="round" d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            Voir sur la carte
+          </a>
+        </div>
         <form class="mt-7 grid sm:grid-cols-[1fr_200px_200px_auto] gap-3" (ngSubmit)="submit()" role="search">
           <label><span class="sr-only">Nom ou spécialité</span>
             <input name="q" [(ngModel)]="qDraft" type="search" placeholder="Nom ou spécialité" class="field !mt-0 bg-white" /></label>
