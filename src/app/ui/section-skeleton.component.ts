@@ -9,7 +9,7 @@ import { Component, input } from '@angular/core';
   standalone: true,
   host: { role: 'status', 'aria-label': 'Chargement…', class: 'block' },
   template: `
-    <section [class]="tone() === 'white' ? 'bg-white' : 'bg-argile-50 rounded-[48px] lg:rounded-[80px] mx-2 sm:mx-4'" class="py-20 lg:py-28">
+    <section [class]="tone() === 'white' ? 'bg-white' : 'bg-argile-50 rounded-lg mx-2 sm:mx-4'" class="py-20 lg:py-28">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @switch (variant()) {
           @case ('quotes') {
@@ -21,7 +21,7 @@ import { Component, input } from '@angular/core';
               @for (_ of [1, 2, 3, 4]; track $index) {
                 <div class="flex items-end gap-3" [class.lg:mt-16]="$index % 2 === 1">
                   <div class="skeleton w-12 h-12 shrink-0"></div>
-                  <div class="skeleton !rounded-[28px] h-32 flex-1"></div>
+                  <div class="skeleton !rounded-lg h-32 flex-1"></div>
                 </div>
               }
             </div>
@@ -36,7 +36,7 @@ import { Component, input } from '@angular/core';
               </div>
               <div class="lg:col-span-8 space-y-3">
                 @for (_ of [1, 2, 3, 4, 5, 6, 7]; track $index) {
-                  <div class="flex items-center justify-between gap-6 px-6 py-5 rounded-[28px] border-2 border-encre/10">
+                  <div class="flex items-center justify-between gap-6 px-6 py-5 rounded-lg border border-encre/10">
                     <div class="skeleton h-5" [style.width.%]="55 + (($index * 13) % 30)"></div>
                     <div class="skeleton w-10 h-10"></div>
                   </div>

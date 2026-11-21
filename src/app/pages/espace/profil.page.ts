@@ -1,61 +1,66 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
 import { METIERS, VILLES } from '../../core/metiers';
 import { Disponibilite, Me } from '../../core/models';
+import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 
 @Component({
   selector: 'app-profil-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, DashboardShellComponent],
   template: `
-    <section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <a [routerLink]="auth.homeUrl()" class="text-sm font-semibold text-encre-soft hover:text-encre">‹ Retour à mon espace</a>
-      <h1 class="mt-3 text-5xl">Mon profil</h1>
-      <p class="mt-2 text-encre-soft">{{ auth.user()?.email }}</p>
+    <app-dashboard-shell active="profil" title="Mon profil">
+     <div class="max-w-3xl">
+      <h1 class="text-3xl">Mon profil</h1>
+      <p class="mt-1 text-encre-soft">
+        @if (isArtisan()) { Ces informations apparaissent sur votre page publique d’artisan. }
+        @else { Ces informations aident les artisans à préparer leur intervention. }
+        Compte : {{ auth.user()?.email }}
+      </p>
 
-      <form [formGroup]="form" (ngSubmit)="save()" class="mt-9 space-y-6" novalidate>
+      <form [formGroup]="form" (ngSubmit)="save()" class="dash-panel mt-6 p-5 sm:p-7 space-y-6" novalidate>
         <div class="grid sm:grid-cols-2 gap-5">
-          <label class="block"><span class="font-semibold">Prénom</span><input formControlName="prenom" class="field" /></label>
-          <label class="block"><span class="font-semibold">Nom</span><input formControlName="nom" class="field" /></label>
+          <label class="block"><span class="text-sm font-medium">Prénom</span><input formControlName="prenom" class="field" /></label>
+          <label class="block"><span class="text-sm font-medium">Nom</span><input formControlName="nom" class="field" /></label>
         </div>
 
         @if (isArtisan()) {
           <div class="grid sm:grid-cols-2 gap-5">
-            <label class="block"><span class="font-semibold">Métier</span>
+            <label class="block"><span class="text-sm font-medium">Métier</span>
               <input formControlName="metier" list="metiers-list" class="field" />
               <datalist id="metiers-list">@for (m of metiers; track m) { <option [value]="m"></option> }</datalist></label>
-            <label class="block"><span class="font-semibold">Ville</span>
+            <label class="block"><span class="text-sm font-medium">Ville</span>
               <input formControlName="ville" list="villes-list" class="field" />
               <datalist id="villes-list">@for (v of villes; track v) { <option [value]="v"></option> }</datalist></label>
-            <label class="block"><span class="font-semibold">Tarif horaire (MAD)</span>
+            <label class="block"><span class="text-sm font-medium">Tarif horaire (MAD)</span>
               <input type="number" min="0" formControlName="tarifHoraire" class="field" /></label>
           </div>
           <fieldset>
-            <legend class="font-semibold">Disponibilité</legend>
+            <legend class="text-sm font-medium">Disponibilité</legend>
             <div class="mt-3 flex flex-wrap gap-2">
               @for (d of dispos; track d.value) {
                 <label class="chip"><input type="radio" formControlName="disponibilite" [value]="d.value" class="sr-only" />{{ d.label }}</label>
               }
             </div>
           </fieldset>
-          <label class="block"><span class="font-semibold">Présentation</span>
+          <label class="block"><span class="text-sm font-medium">Présentation</span>
             <textarea formControlName="description" rows="5" class="field resize-y"
                       placeholder="Votre expérience, vos spécialités, votre zone d'intervention…"></textarea></label>
         } @else {
-          <label class="block"><span class="font-semibold">Adresse</span><input formControlName="adresse" class="field" /></label>
-          <label class="block"><span class="font-semibold">Préférences</span>
+          <label class="block"><span class="text-sm font-medium">Adresse</span><input formControlName="adresse" class="field" /></label>
+          <label class="block"><span class="text-sm font-medium">Préférences</span>
             <textarea formControlName="preferences" rows="3" class="field resize-y" placeholder="Ex. disponible le week-end, paiement à la fin…"></textarea></label>
         }
 
         @if (message()) {
-          <p role="status" class="enter-rise rounded-2xl px-4 py-3" [class.bg-menthe-50]="!isError()" [class.bg-argile-50]="isError()">{{ message() }}</p>
+          <p role="status" class="enter-rise rounded-lg px-4 py-3" [class.bg-menthe-50]="!isError()" [class.bg-argile-50]="isError()">{{ message() }}</p>
         }
         <button type="submit" class="btn btn-menthe" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
       </form>
-    </section>
+     </div>
+    </app-dashboard-shell>
   `,
 })
 export class ProfilPage {

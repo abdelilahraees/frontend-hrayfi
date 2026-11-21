@@ -3,21 +3,18 @@
 @let isNavigating = navigating();
 
 <header
-  [ngClass]="{ 'shadow-[0_2px_0_rgb(16_48_42/0.08)]': isScrolled }"
-  class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur transition-shadow duration-300"
+  [ngClass]="{ 'border-encre/10': isScrolled, 'border-transparent': !isScrolled }"
+  class="fixed top-0 inset-x-0 z-50 bg-white/95 backdrop-blur border-b transition-colors duration-300"
 >
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-18">
       <!-- Logo -->
-      <a routerLink="/" class="group flex items-center gap-2.5 shrink-0" (click)="closeMobile()">
-        <span
-          class="relative grid place-items-center w-10 h-10 rounded-[14px] bg-menthe border-2 border-encre font-display font-extrabold text-2xl leading-none pt-1 transition-transform duration-300 group-hover:-rotate-6"
-        >
-          h
-          <span class="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-citron border-2 border-encre"></span>
+      <a routerLink="/" class="flex items-center gap-2.5 shrink-0" (click)="closeMobile()" aria-label="Hrayfi, accueil">
+        <app-khatam [size]="34" />
+        <span class="flex flex-col leading-none">
+          <span class="font-display text-[22px] font-semibold tracking-wide">Hrayfi</span>
+          <span class="font-arabic text-[13px] text-menthe-deep mt-0.5" lang="ar">حرايفي</span>
         </span>
-        <span class="font-display font-extrabold text-[26px] leading-none pt-1">hrayfi</span>
-        <span class="hidden sm:inline font-arabic text-lg text-encre-soft leading-none" lang="ar">حرايفي</span>
       </a>
 
       <!-- Desktop Nav -->
@@ -25,9 +22,9 @@
         @for (link of links; track link.href) {
           <a
             [routerLink]="link.href"
-            routerLinkActive="!bg-menthe-50 !text-menthe-deep"
+            routerLinkActive="!text-encre after:!scale-x-100"
             [routerLinkActiveOptions]="{ exact: link.href === '/' }"
-            class="px-4 py-2 rounded-full text-[15px] font-semibold text-encre/80 hover:text-encre hover:bg-menthe-50 transition-colors"
+            class="relative px-3.5 py-2 text-[15px] font-medium text-encre-soft hover:text-encre transition-colors after:absolute after:inset-x-3.5 after:-bottom-[19px] after:h-0.5 after:bg-menthe-deep after:scale-x-0 after:transition-transform"
             >{{ link.label }}</a
           >
         }
@@ -36,21 +33,21 @@
       <!-- CTA -->
       <div class="hidden lg:flex items-center gap-3">
         @if (loggedIn()) {
-          <a routerLink="/messages" class="press relative grid place-items-center w-11 h-11 rounded-full hover:bg-menthe-50"
+          <a routerLink="/messages" class="relative grid place-items-center w-10 h-10 rounded-md text-encre-soft hover:text-encre hover:bg-chaux"
              [attr.aria-label]="'Messages' + (unreadMessages() ? ', ' + unreadMessages() + ' non lus' : '')">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linejoin="round" d="M4 5h16v11H9l-5 4V5z" />
             </svg>
             @if (unreadMessages()) {
-              <span class="absolute top-1 right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-citron border-2 border-encre text-[11px] font-bold leading-none">{{ unreadMessages() }}</span>
+              <span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-citron text-[10px] font-semibold text-encre leading-none ring-2 ring-white">{{ unreadMessages() }}</span>
             }
           </a>
           <app-notification-bell />
-          <a [routerLink]="homeUrl()" class="btn btn-citron !py-2.5 !px-5 !text-base">Mon espace</a>
-          <button type="button" (click)="logout()" class="text-[15px] font-semibold text-encre/80 hover:text-encre px-2">Déconnexion</button>
+          <a [routerLink]="homeUrl()" class="btn btn-menthe !py-2.5 ml-2">Mon espace</a>
+          <button type="button" (click)="logout()" class="text-[15px] font-medium text-encre-soft hover:text-encre px-2">Déconnexion</button>
         } @else {
-          <a routerLink="/login" class="text-[15px] font-semibold text-encre/80 hover:text-encre">Se connecter</a>
-          <a routerLink="/register" [queryParams]="{ profil: 'artisan' }" class="btn btn-citron !py-2.5 !px-5 !text-base">Publier mes services</a>
+          <a routerLink="/login" class="text-[15px] font-medium text-encre-soft hover:text-encre px-2">Se connecter</a>
+          <a routerLink="/register" [queryParams]="{ profil: 'artisan' }" class="btn btn-menthe !py-2.5">Vous êtes artisan ?</a>
         }
       </div>
 
@@ -58,18 +55,18 @@
       <button
         type="button"
         (click)="toggleMobile()"
-        class="press lg:hidden grid place-items-center w-11 h-11 -mr-1 rounded-full border-2 border-encre bg-white"
+        class="lg:hidden grid place-items-center w-10 h-10 -mr-1 rounded-md border border-encre/15 bg-white"
         [attr.aria-expanded]="open"
         aria-controls="mobile-menu"
         [attr.aria-label]="open ? 'Fermer le menu' : 'Ouvrir le menu'"
       >
         @if (open) {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+            <path stroke-linecap="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         } @else {
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-width="2.5" d="M4 8h16M4 16h10" />
+            <path stroke-linecap="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         }
       </button>
@@ -78,7 +75,7 @@
 
   <!-- Page-change progress (lazy pages) -->
   @if (isNavigating) {
-    <div class="nav-progress absolute inset-x-0 bottom-0 h-1 bg-menthe rounded-r-full" role="progressbar" aria-label="Chargement de la page"></div>
+    <div class="nav-progress absolute inset-x-0 -bottom-px h-0.5 bg-citron" role="progressbar" aria-label="Chargement de la page"></div>
   }
 
   <!-- Mobile Menu -->
@@ -87,31 +84,31 @@
       id="mobile-menu"
       animate.enter="enter-drop"
       animate.leave="leave-lift"
-      class="lg:hidden bg-white border-t-2 border-encre/10"
+      class="lg:hidden bg-white border-t border-encre/10"
     >
       <nav class="px-4 pt-3 pb-6 flex flex-col gap-1" aria-label="Navigation mobile">
         @for (link of links; track link.href) {
           <a
             [routerLink]="link.href"
-            routerLinkActive="!bg-menthe-50"
+            routerLinkActive="!bg-chaux !text-menthe-deep"
             [routerLinkActiveOptions]="{ exact: link.href === '/' }"
             (click)="closeMobile()"
-            class="font-display font-bold text-2xl px-4 py-2.5 rounded-2xl hover:bg-menthe-50"
+            class="font-display text-xl px-3 py-2.5 rounded-md hover:bg-chaux"
             >{{ link.label }}</a
           >
         }
         @if (loggedIn()) {
-          <a routerLink="/messages" (click)="closeMobile()" class="font-display font-bold text-2xl px-4 py-2.5 rounded-2xl hover:bg-menthe-50">
+          <a routerLink="/messages" (click)="closeMobile()" class="font-display text-xl px-3 py-2.5 rounded-md hover:bg-chaux">
             Messages
             @if (unreadMessages()) {
-              <span class="ml-2 align-middle inline-grid place-items-center min-w-6 h-6 px-1.5 rounded-full bg-citron border-2 border-encre text-xs">{{ unreadMessages() }}</span>
+              <span class="ml-2 align-middle inline-grid place-items-center min-w-6 h-6 px-1.5 rounded-full bg-citron text-xs font-sans font-semibold">{{ unreadMessages() }}</span>
             }
           </a>
-          <a [routerLink]="homeUrl()" (click)="closeMobile()" class="btn btn-citron mt-3">Mon espace</a>
-          <button type="button" (click)="logout()" class="mt-3 px-4 py-2 text-left font-semibold text-encre/80">Déconnexion</button>
+          <a [routerLink]="homeUrl()" (click)="closeMobile()" class="btn btn-menthe mt-3">Mon espace</a>
+          <button type="button" (click)="logout()" class="mt-3 px-3 py-2 text-left font-medium text-encre-soft">Déconnexion</button>
         } @else {
-          <a routerLink="/login" (click)="closeMobile()" class="mt-3 px-4 py-2 font-semibold text-encre/80">Se connecter</a>
-          <a routerLink="/register" [queryParams]="{ profil: 'artisan' }" (click)="closeMobile()" class="btn btn-citron mt-3">Publier mes services</a>
+          <a routerLink="/login" (click)="closeMobile()" class="mt-3 px-3 py-2 font-medium text-encre-soft">Se connecter</a>
+          <a routerLink="/register" [queryParams]="{ profil: 'artisan' }" (click)="closeMobile()" class="btn btn-menthe mt-3">Vous êtes artisan ?</a>
         }
       </nav>
     </div>

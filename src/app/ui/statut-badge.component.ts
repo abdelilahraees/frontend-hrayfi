@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { StatutDemande } from '../core/models';
 
 export const STATUTS: Record<StatutDemande, { label: string; cls: string; dot: string }> = {
-  EN_ATTENTE: { label: 'En attente', cls: 'bg-citron-50 text-[#7a5d00]', dot: 'bg-[#e9b800]' },
+  EN_ATTENTE: { label: 'En attente', cls: 'bg-citron-50 text-[#7a5d00]', dot: 'bg-citron' },
   ACCEPTEE: { label: 'Acceptée', cls: 'bg-menthe-50 text-menthe-deep', dot: 'bg-menthe' },
   REFUSEE: { label: 'Refusée', cls: 'bg-argile-50 text-[#9a3b22]', dot: 'bg-argile' },
   TERMINEE: { label: 'Terminée', cls: 'bg-encre/[0.06] text-encre', dot: 'bg-encre' },

@@ -12,6 +12,7 @@ import { AnnonceService } from '../../core/services/annonce.service';
 import { ArtisanService } from '../../core/services/artisan.service';
 import { MessageService } from '../../core/services/message.service';
 import { AvatarComponent } from '../../ui/avatar.component';
+import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 import { PricePipe } from '../../ui/price.pipe';
 
 const PAGE_SIZE = 30;
@@ -25,7 +26,7 @@ const PAGE_SIZE = 30;
 @Component({
   selector: 'app-messages-page',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, AvatarComponent, PricePipe],
+  imports: [DatePipe, FormsModule, RouterLink, AvatarComponent, DashboardShellComponent, PricePipe],
   templateUrl: './messages.page.html',
 })
 export class MessagesPage {

@@ -12,15 +12,15 @@ import { PricePipe } from './price.pipe';
   template: `
     @let a = annonce();
     <a [routerLink]="['/annonces', a.id]"
-       class="group flex h-full flex-col overflow-hidden rounded-[28px] border-2 border-encre bg-white transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_6px_0_var(--color-encre)]">
+       class="group flex h-full flex-col overflow-hidden rounded-lg border border-encre/15 bg-white transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_40px_-20px_rgb(23_35_31/0.35)]">
       <div class="relative aspect-[4/3] overflow-hidden border-b-2 border-encre bg-menthe-50">
         <img [src]="cover()" [alt]="a.titre" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <span class="absolute left-3 top-3 rounded-full border-2 border-encre bg-citron px-3 py-1 text-sm font-bold">{{ a.metier }}</span>
+        <span class="absolute left-3 top-3 rounded-full border border-encre/15 bg-citron px-3 py-1 text-sm font-bold">{{ a.metier }}</span>
         @if (a.images.length > 1) {
           <span class="absolute right-3 bottom-3 rounded-full bg-encre/80 px-2.5 py-1 text-xs font-semibold text-white">{{ a.images.length }} photos</span>
         }
         @if (!a.active) {
-          <span class="absolute right-3 top-3 rounded-full bg-white border-2 border-encre px-3 py-1 text-xs font-bold">Masquée</span>
+          <span class="absolute right-3 top-3 rounded-full bg-white border border-encre/15 px-3 py-1 text-xs font-bold">Masquée</span>
         }
       </div>
       <div class="flex flex-1 flex-col p-5">

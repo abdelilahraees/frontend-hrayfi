@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { KhatamComponent } from '../../ui/khatam.component';
 
 type NavCol = {
   title: string;
@@ -9,7 +10,7 @@ type NavCol = {
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, KhatamComponent],
   templateUrl: './footer.component.html',
 })
 export class FooterComponent {
