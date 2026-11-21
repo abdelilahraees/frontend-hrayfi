@@ -4,25 +4,26 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
-import { Avis, ClientDashboard, Conversation, Demande } from '../../core/models';
+import { Avis, ClientDashboard, Conversation, Demande, StatutDemande } from '../../core/models';
 import { AvisService } from '../../core/services/avis.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
 import { MessageService } from '../../core/services/message.service';
-import { monthlyTotals, upcoming } from '../../core/dashboard-stats';
+import { TriDemandes, countByStatut, downloadCsv, monthTrend, monthlyTotals, searchDemandes, upcoming } from '../../core/dashboard-stats';
 import { AvatarComponent } from '../../ui/avatar.component';
 import { BarChartComponent } from '../../ui/bar-chart.component';
 import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
+import { IconComponent } from '../../ui/icon.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarInputComponent } from '../../ui/star-input.component';
 import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
-import { StatutBadgeComponent } from '../../ui/statut-badge.component';
+import { STATUTS, StatutBadgeComponent } from '../../ui/statut-badge.component';
 
 @Component({
   selector: 'app-client-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './client-dashboard.page.html',
 })
 export class ClientDashboardPage {
@@ -39,15 +40,34 @@ export class ClientDashboardPage {
 
   protected readonly today = new Date();
   protected readonly nav: DashNavItem[] = [
-    { label: "Vue d'ensemble", link: '/espace/client', active: true },
-    { label: 'Trouver un artisan', link: '/annonces' },
-    { label: 'Messages', link: '/messages' },
-    { label: 'Profil', link: '/espace/profil' },
+    { label: "Vue d'ensemble", icon: 'home', link: '/espace/client', active: true },
+    { label: 'Trouver un artisan', icon: 'search', link: '/annonces' },
+    { label: 'Messages', icon: 'message', link: '/messages' },
+    { label: 'Profil', icon: 'user', link: '/espace/profil' },
   ];
 
   protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
   protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
   protected readonly aVenir = computed(() => upcoming(this.demandes() ?? [], 4));
+  protected readonly tendance = computed(() => monthTrend(this.demandes() ?? []));
+
+  /** Filtres de la liste « Mes demandes » */
+  protected readonly STATUTS = STATUTS;
+  protected readonly FILTRES: (StatutDemande | 'TOUTES')[] = ['TOUTES', 'EN_ATTENTE', 'ACCEPTEE', 'TERMINEE', 'REFUSEE'];
+  protected readonly filtre = signal<StatutDemande | 'TOUTES'>('TOUTES');
+  protected readonly recherche = signal('');
+  protected readonly tri = signal<TriDemandes>('recentes');
+  protected readonly repartition = computed(() => countByStatut(this.demandes() ?? []));
+  protected readonly demandesFiltrees = computed(() => {
+    const list = this.demandes();
+    if (!list) return null;
+    const f = this.filtre();
+    return searchDemandes(f === 'TOUTES' ? list : list.filter((d) => d.statut === f), this.recherche(), this.tri(), 'artisan');
+  });
+
+  protected exporter() {
+    downloadCsv(this.demandesFiltrees() ?? [], `hrayfi-mes-demandes-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
 
   /** Évaluation de fin d'intervention en cours de saisie */
   protected readonly evaluating = signal<number | null>(null);

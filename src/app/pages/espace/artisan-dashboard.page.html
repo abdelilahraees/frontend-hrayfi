@@ -4,8 +4,8 @@
 <app-dashboard-shell [name]="(u?.prenom ?? '') + ' ' + (u?.nom ?? '')" [subtitle]="u?.metier ?? 'Artisan'" [items]="nav()">
   <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
     <div>
-      <p class="text-sm text-encre-soft first-letter:uppercase">{{ today | date: 'EEEE d MMMM y' }}</p>
-      <h1 class="mt-1 text-3xl sm:text-4xl">
+      <p class="text-[13px] text-encre-soft first-letter:uppercase">{{ today | date: 'EEEE d MMMM y' }}</p>
+      <h1 class="mt-1 text-2xl sm:text-[28px]">
         @switch (ongletActif()) {
           @case ('demandes') { Demandes reçues }
           @case ('annonces') { Mes annonces }
@@ -13,94 +13,116 @@
         }
       </h1>
     </div>
-    <a routerLink="/espace/artisan/annonces/nouvelle" class="dash-btn dash-btn-primary !px-4 !py-2.5">Publier une annonce</a>
+    <div class="flex items-center gap-2">
+      <button type="button" class="dash-btn !h-9" (click)="refresh()" [title]="majLe() ? 'Mis à jour à ' + (majLe() | date: 'HH:mm') : 'Actualiser'">
+        <app-icon name="refresh" [size]="15" /><span class="hidden sm:inline">Actualiser</span>
+      </button>
+      <a routerLink="/espace/artisan/annonces/nouvelle" class="dash-btn dash-btn-primary !h-9 !px-3.5">
+        <app-icon name="plus" [size]="16" [stroke]="2.2" />Publier une annonce
+      </a>
+    </div>
   </header>
 
   @if (error()) {
-    <p role="alert" class="mt-6 rounded-xl border border-[#d23c3c]/30 bg-argile-50 px-4 py-3 text-sm">{{ error() }}</p>
+    <p role="alert" class="mt-6 rounded-lg border border-[#d23c3c]/30 bg-argile-50 px-4 py-3 text-sm">{{ error() }}</p>
   }
 
   @switch (ongletActif()) {
     <!-- ============ Vue d'ensemble ============ -->
     @case ('apercu') {
-      <div class="dash-panel mt-6 overflow-hidden grid grid-cols-2 lg:grid-cols-4 gap-px !bg-encre/10 [&>*]:bg-white">
-        <app-stat-tile label="Chiffre d'affaires du mois" [value]="s ? (s.chiffreAffairesCeMois | number: '1.0-0') + ' MAD' : '–'"
-                       [hint]="s ? s.demandesTermineesCeMois + ' intervention(s) terminée(s)' : ''" />
-        <app-stat-tile label="Demandes en attente" [value]="s?.demandesEnAttente ?? '–'" [tone]="s?.demandesEnAttente ? 'text-[#a37b00]' : 'text-encre'"
+      <div class="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <app-stat-tile label="Revenus du mois" icon="wallet" [value]="s ? (s.chiffreAffairesCeMois | number: '1.0-0') + ' MAD' : '–'"
+                       [trend]="tendance()" [hint]="tendance() != null ? 'vs mois dernier' : s ? s.demandesTermineesCeMois + ' intervention(s) terminée(s)' : ''" />
+        <app-stat-tile label="Demandes en attente" icon="clock" [value]="s?.demandesEnAttente ?? '–'" [tone]="s?.demandesEnAttente ? 'text-[#a37b00]' : 'text-encre'"
                        hint="À accepter ou refuser" />
-        <app-stat-tile label="Taux d'acceptation" [value]="s ? (s.tauxAcceptation * 100 | number: '1.0-0') + ' %' : '–'"
+        <app-stat-tile label="Taux d'acceptation" icon="check" [value]="s ? (s.tauxAcceptation * 100 | number: '1.0-0') + ' %' : '–'"
                        [hint]="s ? s.demandesAcceptees + ' intervention(s) prévue(s)' : ''" />
-        <app-stat-tile label="Note de mes annonces" [value]="s ? (s.nbAvisAnnonces ? (s.noteMoyenneAnnonces | number: '1.1-1') + ' / 5' : '–') : '–'"
+        <app-stat-tile label="Note moyenne" icon="star" [value]="s ? (s.nbAvisAnnonces ? (s.noteMoyenneAnnonces | number: '1.1-1') + ' / 5' : '–') : '–'"
                        [hint]="s ? s.nbAvisAnnonces + ' avis · ' + s.nbAnnoncesActives + ' annonce(s) en ligne' : ''" />
       </div>
 
-      <div class="mt-6 grid xl:grid-cols-3 gap-6 [&>*]:min-w-0">
-        <section class="dash-panel p-5 sm:p-6 xl:col-span-2" aria-labelledby="ca-titre">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="ca-titre" class="font-sans text-base font-bold tracking-normal">Revenus des 6 derniers mois</h2>
-            <p class="text-sm text-encre-soft">Total <strong class="text-encre tabular-nums">{{ totalPeriode() | number: '1.0-0' }} MAD</strong></p>
+      <div class="mt-4 sm:mt-5 grid xl:grid-cols-3 gap-4 sm:gap-5 [&>*]:min-w-0">
+        <section class="dash-panel xl:col-span-2" aria-labelledby="ca-titre">
+          <div class="dash-panel-head">
+            <h2 id="ca-titre" class="dash-title">Revenus des 6 derniers mois</h2>
+            <p class="text-sm text-encre-soft">Total <strong class="font-semibold text-encre tabular-nums">{{ totalPeriode() | number: '1.0-0' }} MAD</strong></p>
           </div>
-          @if (demandes() === null) {
-            <div class="skeleton mt-6 h-52 !rounded-xl"></div>
-          } @else {
-            <app-bar-chart class="mt-6" [months]="mois()" caption="Montant des interventions terminées par mois" />
-          }
+          <div class="p-5">
+            @if (demandes() === null) {
+              <div class="skeleton h-52 !rounded-lg"></div>
+            } @else {
+              <app-bar-chart [months]="mois()" caption="Montant des interventions terminées par mois"
+                             emptyHint="Clôturez vos interventions avec leur montant final pour suivre vos revenus." />
+            }
+          </div>
         </section>
 
-        <section class="dash-panel p-5 sm:p-6" aria-labelledby="rep-titre">
-          <h2 id="rep-titre" class="font-sans text-base font-bold tracking-normal">Répartition des demandes</h2>
-          <div class="mt-6 flex h-2.5 overflow-hidden rounded-full bg-encre/[0.06]" aria-hidden="true">
-            @for (st of ORDRE; track st) {
-              <div class="transition-[width] duration-500" [class]="STATUTS[st].dot" [style.width.%]="part(st)"></div>
-            }
+        <section class="dash-panel" aria-labelledby="rep-titre">
+          <div class="dash-panel-head">
+            <h2 id="rep-titre" class="dash-title">Répartition des demandes</h2>
+            <span class="text-xs text-encre-soft tabular-nums">{{ demandes()?.length ?? 0 }} au total</span>
           </div>
-          <ul class="mt-5 space-y-3">
-            @for (st of ORDRE; track st) {
-              <li class="flex items-center justify-between text-sm">
-                <span class="flex items-center gap-2.5"><span class="size-2.5 rounded-full" [class]="STATUTS[st].dot"></span>{{ STATUTS[st].label }}</span>
-                <span class="font-semibold tabular-nums">{{ repartition()[st] }}</span>
-              </li>
-            }
-          </ul>
-          <p class="mt-5 pt-4 border-t border-encre/10 text-xs text-encre-soft">Sur vos {{ demandes()?.length ?? 0 }} dernières demandes.</p>
+          <div class="p-5">
+            <div class="flex h-2 gap-0.5 overflow-hidden rounded-full bg-encre/[0.06]" aria-hidden="true">
+              @for (st of ORDRE; track st) {
+                @if (part(st)) { <div class="transition-[width] duration-500" [class]="STATUTS[st].dot" [style.width.%]="part(st)"></div> }
+              }
+            </div>
+            <ul class="mt-5 space-y-1">
+              @for (st of ORDRE; track st) {
+                <li>
+                  <a routerLink="/espace/artisan" [queryParams]="{ onglet: 'demandes' }" (click)="filtre.set(st)"
+                     class="flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 text-sm hover:bg-encre/[0.03]">
+                    <span class="flex items-center gap-2.5"><span class="size-2 rounded-full" [class]="STATUTS[st].dot"></span>{{ STATUTS[st].label }}</span>
+                    <span class="flex items-center gap-3 tabular-nums">
+                      <span class="text-xs text-encre-soft">{{ part(st) | number: '1.0-0' }} %</span>
+                      <span class="w-6 text-right font-semibold">{{ repartition()[st] }}</span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
         </section>
       </div>
 
-      <div class="mt-6 grid xl:grid-cols-2 gap-6 [&>*]:min-w-0 items-start">
+      <div class="mt-4 sm:mt-5 grid xl:grid-cols-2 gap-4 sm:gap-5 [&>*]:min-w-0 items-start">
         <section class="dash-panel" aria-labelledby="agenda-titre">
-          <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-encre/10">
-            <h2 id="agenda-titre" class="font-sans text-base font-bold tracking-normal">Prochaines interventions</h2>
+          <div class="dash-panel-head">
+            <h2 id="agenda-titre" class="dash-title flex items-center gap-2"><app-icon name="calendar" [size]="16" class="text-encre-soft" />Prochaines interventions</h2>
           </div>
-          <ul class="divide-y divide-encre/10">
+          <ul class="divide-y divide-encre/[0.07]">
             @for (d of aVenir(); track d.id) {
-              <li class="flex items-center gap-4 px-5 sm:px-6 py-3.5">
-                <div class="w-12 shrink-0 rounded-lg bg-menthe-50 py-1.5 text-center leading-none">
-                  <span class="block font-display text-xl font-bold text-menthe-deep">{{ d.dateIntervention | date: 'd' }}</span>
-                  <span class="block mt-0.5 text-[11px] text-menthe-deep">{{ d.dateIntervention | date: 'MMM' }}</span>
+              <li class="flex items-center gap-4 px-5 py-3">
+                <div class="w-11 shrink-0 overflow-hidden rounded-lg border border-encre/10 text-center leading-none">
+                  <span class="block bg-menthe-deep py-0.5 text-[10px] font-semibold uppercase text-white">{{ d.dateIntervention | date: 'MMM' }}</span>
+                  <span class="block py-1.5 text-base font-semibold">{{ d.dateIntervention | date: 'd' }}</span>
                 </div>
                 <div class="min-w-0 flex-1">
-                  <p class="font-semibold truncate">{{ d.clientNomComplet }}</p>
-                  <p class="text-sm text-encre-soft truncate">{{ d.dateIntervention | date: "EEEE 'à' HH:mm" }} — {{ d.annonceTitre ?? d.description }}</p>
+                  <p class="text-sm font-semibold truncate">{{ d.clientNomComplet }}</p>
+                  <p class="text-[13px] text-encre-soft truncate">{{ d.dateIntervention | date: "EEEE 'à' HH:mm" }} · {{ d.annonceTitre ?? d.description }}</p>
                 </div>
                 @if (d.prixConvenu != null) { <span class="hidden sm:block text-sm font-semibold tabular-nums">{{ d.prixConvenu | price }}</span> }
               </li>
             } @empty {
-              <li class="px-5 sm:px-6 py-8 text-sm text-encre-soft">Aucune intervention prévue. Les demandes que vous acceptez apparaissent ici.</li>
+              <li class="px-5 py-8 text-center text-sm text-encre-soft">Aucune intervention prévue. Les demandes que vous acceptez apparaissent ici.</li>
             }
           </ul>
         </section>
 
         <section class="dash-panel" aria-labelledby="atraiter-titre">
-          <div class="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-encre/10">
-            <h2 id="atraiter-titre" class="font-sans text-base font-bold tracking-normal">À traiter</h2>
-            <a routerLink="/espace/artisan" [queryParams]="{ onglet: 'demandes' }" class="text-sm font-semibold text-menthe-deep hover:underline">Toutes les demandes</a>
+          <div class="dash-panel-head">
+            <h2 id="atraiter-titre" class="dash-title flex items-center gap-2"><app-icon name="inbox" [size]="16" class="text-encre-soft" />À traiter</h2>
+            <a routerLink="/espace/artisan" [queryParams]="{ onglet: 'demandes' }" class="inline-flex items-center gap-1 text-[13px] font-medium text-menthe-deep hover:underline">
+              Toutes les demandes<app-icon name="arrowRight" [size]="14" />
+            </a>
           </div>
-          <ul class="divide-y divide-encre/10">
+          <ul class="divide-y divide-encre/[0.07]">
             @for (d of aTraiter(); track d.id) {
-              <li class="flex flex-wrap items-center gap-3 px-5 sm:px-6 py-3.5">
+              <li class="flex flex-wrap items-center gap-3 px-5 py-3">
                 <div class="min-w-0 flex-1">
-                  <p class="font-semibold truncate">{{ d.clientNomComplet }}</p>
-                  <p class="text-sm text-encre-soft truncate">{{ d.dateIntervention | date: "d MMM 'à' HH:mm" }} — {{ d.description }}</p>
+                  <p class="text-sm font-semibold truncate">{{ d.clientNomComplet }}</p>
+                  <p class="text-[13px] text-encre-soft truncate">{{ d.dateIntervention | date: "d MMM 'à' HH:mm" }} · {{ d.description }}</p>
                 </div>
                 <div class="flex gap-1.5">
                   <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>
@@ -108,7 +130,7 @@
                 </div>
               </li>
             } @empty {
-              <li class="px-5 sm:px-6 py-8 text-sm text-encre-soft">Aucune demande en attente.</li>
+              <li class="px-5 py-8 text-center text-sm text-encre-soft">Aucune demande en attente. Vous êtes à jour.</li>
             }
           </ul>
         </section>
@@ -117,36 +139,57 @@
 
     <!-- ============ Demandes ============ -->
     @case ('demandes') {
-      <div class="mt-6 flex flex-wrap gap-1.5" role="group" aria-label="Filtrer par statut">
-        @for (f of FILTRES; track f) {
-          <button type="button" (click)="filtre.set(f)" [attr.aria-pressed]="filtre() === f"
-                  class="rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors"
-                  [class]="filtre() === f ? 'bg-encre text-white' : 'bg-white border border-encre/10 text-encre-soft hover:text-encre'">
-            {{ f === 'TOUTES' ? 'Toutes' : STATUTS[f].label }}
-            <span class="ml-1 tabular-nums opacity-70">{{ f === 'TOUTES' ? (demandes()?.length ?? 0) : repartition()[f] }}</span>
+      <div class="mt-6 flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-3">
+        <div class="flex flex-wrap self-start gap-1 rounded-lg border border-encre/10 bg-white p-1" role="group" aria-label="Filtrer par statut">
+          @for (f of FILTRES; track f) {
+            <button type="button" (click)="filtre.set(f)" [attr.aria-pressed]="filtre() === f"
+                    class="rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors"
+                    [class]="filtre() === f ? 'bg-encre text-white' : 'text-encre-soft hover:text-encre hover:bg-encre/[0.04]'">
+              {{ f === 'TOUTES' ? 'Toutes' : STATUTS[f].label }}
+              <span class="ml-1 tabular-nums opacity-60">{{ f === 'TOUTES' ? (demandes()?.length ?? 0) : repartition()[f] }}</span>
+            </button>
+          }
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="relative">
+            <span class="sr-only">Rechercher une demande</span>
+            <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+            <input type="search" class="dash-input w-56 !pl-8" placeholder="Rechercher…"
+                   [ngModel]="recherche()" (ngModelChange)="recherche.set($event)" />
+          </label>
+          <label>
+            <span class="sr-only">Trier</span>
+            <select class="dash-input pr-8" [ngModel]="tri()" (ngModelChange)="tri.set($event)">
+              <option value="recentes">Plus récentes</option>
+              <option value="intervention">Date d'intervention</option>
+              <option value="montant">Montant</option>
+            </select>
+          </label>
+          <button type="button" class="dash-btn !h-9" (click)="exporter()" [disabled]="!demandesFiltrees()?.length">
+            <app-icon name="download" [size]="15" />Exporter CSV
           </button>
-        }
+        </div>
       </div>
 
       @let list = demandesFiltrees();
       <div class="dash-panel mt-4 overflow-hidden">
-        <div class="hidden md:grid grid-cols-[1.4fr_1.6fr_1fr_0.8fr_auto] gap-4 px-5 py-3 border-b border-encre/10 bg-encre/[0.02] text-xs font-semibold text-encre-soft">
+        <div class="hidden md:grid grid-cols-[1.4fr_1.6fr_1fr_0.8fr_auto] gap-4 px-5 py-2.5 border-b border-encre/10 bg-encre/[0.02] text-[11px] font-semibold uppercase tracking-wider text-encre-soft">
           <span>Client</span><span>Demande</span><span>Intervention</span><span class="text-right">Montant</span><span class="w-52 text-right">Actions</span>
         </div>
         @if (list === null) {
           <div class="p-5 space-y-3" aria-busy="true">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-12 !rounded-lg"></div> }</div>
         } @else {
-          <ul class="divide-y divide-encre/10">
+          <ul class="divide-y divide-encre/[0.07]">
             @for (d of list; track d.id) {
-              <li class="px-5 py-4">
+              <li class="px-5 py-3.5 hover:bg-encre/[0.015]">
                 <div class="grid md:grid-cols-[1.4fr_1.6fr_1fr_0.8fr_auto] gap-x-4 gap-y-2 md:items-center">
                   <div class="min-w-0">
-                    <p class="font-semibold truncate">{{ d.clientNomComplet }}</p>
+                    <p class="text-sm font-semibold truncate">{{ d.clientNomComplet }}</p>
                     <app-statut-badge class="mt-1 inline-block" [statut]="d.statut" />
                   </div>
                   <div class="min-w-0 text-sm">
                     @if (d.annonceTitre) {
-                      <a [routerLink]="['/annonces', d.annonceId]" class="block font-semibold text-menthe-deep truncate hover:underline">{{ d.annonceTitre }}</a>
+                      <a [routerLink]="['/annonces', d.annonceId]" class="block font-medium text-menthe-deep truncate hover:underline">{{ d.annonceTitre }}</a>
                     }
                     <p class="text-encre-soft line-clamp-2">{{ d.description }}</p>
                   </div>
@@ -155,7 +198,9 @@
                     {{ d.prixFinal != null ? (d.prixFinal | price) : d.prixConvenu != null ? (d.prixConvenu | price) : '—' }}
                   </p>
                   <div class="flex flex-wrap gap-1.5 md:w-52 md:justify-end">
-                    <a [routerLink]="['/messages', d.clientId]" [queryParams]="{ nom: d.clientNomComplet, annonce: d.annonceId }" class="dash-btn">Message</a>
+                    <a [routerLink]="['/messages', d.clientId]" [queryParams]="{ nom: d.clientNomComplet, annonce: d.annonceId }" class="dash-btn">
+                      <app-icon name="message" [size]="14" />Message
+                    </a>
                     @if (d.statut === 'EN_ATTENTE') {
                       <button type="button" class="dash-btn dash-btn-accent" [disabled]="busyId() === d.id" (click)="accept(d)">Accepter</button>
                       <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === d.id" (click)="refuse(d)">Refuser</button>
@@ -166,10 +211,10 @@
                   </div>
                 </div>
                 @if (finishing() === d.id) {
-                  <form class="enter-rise mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-citron-50 px-4 py-3" (ngSubmit)="confirmFinish(d)">
+                  <form class="enter-rise mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-encre/10 bg-[#f4f7f6] px-4 py-3" (ngSubmit)="confirmFinish(d)">
                     <label class="flex items-center gap-2 text-sm">
-                      <span class="font-semibold">Montant final</span>
-                      <input type="number" name="prixFinal" min="0" [(ngModel)]="prixFinal" class="field !mt-0 !py-1.5 !rounded-lg w-32 text-sm" />
+                      <span class="font-medium">Montant final</span>
+                      <input type="number" name="prixFinal" min="0" [(ngModel)]="prixFinal" class="dash-input w-32" />
                       <span>MAD</span>
                     </label>
                     <button type="submit" class="dash-btn dash-btn-primary" [disabled]="busyId() === d.id">Marquer comme terminée</button>
@@ -178,8 +223,14 @@
                 }
               </li>
             } @empty {
-              <li class="px-5 py-10 text-center text-sm text-encre-soft">
-                {{ filtre() === 'TOUTES' ? "Aucune demande pour le moment. Elles apparaîtront ici dès qu'un client vous sollicite." : 'Aucune demande avec ce statut.' }}
+              <li class="px-5 py-12 text-center">
+                <app-icon [name]="recherche() ? 'searchX' : 'inbox'" [size]="22" class="text-encre-soft/70" />
+                <p class="mt-2 text-sm font-medium">
+                  {{ recherche() ? 'Aucun résultat pour « ' + recherche() + ' »' : filtre() === 'TOUTES' ? 'Aucune demande pour le moment' : 'Aucune demande avec ce statut' }}
+                </p>
+                <p class="mt-0.5 text-[13px] text-encre-soft">
+                  {{ recherche() ? 'Essayez un autre nom ou mot-clé.' : "Elles apparaîtront ici dès qu'un client vous sollicite." }}
+                </p>
               </li>
             }
           </ul>
@@ -194,33 +245,35 @@
         <div class="dash-panel mt-6 p-5 space-y-3" aria-busy="true">@for (i of [1, 2]; track i) { <div class="skeleton h-16 !rounded-lg"></div> }</div>
       } @else if (!list.length) {
         <div class="dash-panel mt-6 p-10 text-center">
-          <p class="font-display text-2xl font-bold">Vous n'avez pas encore d'annonce.</p>
-          <p class="mt-2 text-encre-soft">Présentez un service avec des photos de vos réalisations : c'est ce que les clients regardent en premier.</p>
-          <a routerLink="/espace/artisan/annonces/nouvelle" class="dash-btn dash-btn-primary !px-4 !py-2.5 mt-6">Publier ma première annonce</a>
+          <app-icon name="list" [size]="26" class="text-encre-soft/70" />
+          <p class="mt-3 text-lg font-semibold">Vous n'avez pas encore d'annonce</p>
+          <p class="mt-1 text-sm text-encre-soft">Présentez un service avec des photos de vos réalisations : c'est ce que les clients regardent en premier.</p>
+          <a routerLink="/espace/artisan/annonces/nouvelle" class="dash-btn dash-btn-primary !h-9 !px-3.5 mt-6"><app-icon name="plus" [size]="16" [stroke]="2.2" />Publier ma première annonce</a>
         </div>
       } @else {
         <div class="dash-panel mt-6 overflow-hidden">
-          <div class="hidden md:grid grid-cols-[2.4fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-encre/10 bg-encre/[0.02] text-xs font-semibold text-encre-soft">
-            <span>Annonce</span><span>Tarif</span><span>Avis</span><span class="w-64 text-right">Actions</span>
+          <div class="hidden md:grid grid-cols-[2.4fr_1fr_1fr_auto] gap-4 px-5 py-2.5 border-b border-encre/10 bg-encre/[0.02] text-[11px] font-semibold uppercase tracking-wider text-encre-soft">
+            <span>Annonce</span><span>Tarif</span><span>Avis</span><span class="w-72 text-right">Actions</span>
           </div>
-          <ul class="divide-y divide-encre/10">
+          <ul class="divide-y divide-encre/[0.07]">
             @for (a of list; track a.id) {
-              <li class="grid md:grid-cols-[2.4fr_1fr_1fr_auto] gap-x-4 gap-y-3 md:items-center px-5 py-4">
+              <li class="grid md:grid-cols-[2.4fr_1fr_1fr_auto] gap-x-4 gap-y-3 md:items-center px-5 py-3.5 hover:bg-encre/[0.015]">
                 <div class="flex items-center gap-4 min-w-0">
-                  <img [src]="mediaUrl(a.images[0]?.url)" alt="" class="w-20 aspect-[4/3] shrink-0 rounded-lg object-cover bg-menthe-50" [class.grayscale]="!a.active" />
+                  <img [src]="mediaUrl(a.images[0]?.url)" alt="" class="w-16 aspect-[4/3] shrink-0 rounded-md object-cover bg-menthe-50" [class.grayscale]="!a.active" />
                   <div class="min-w-0">
-                    <a [routerLink]="['/annonces', a.id]" class="block font-semibold truncate hover:underline">{{ a.titre }}</a>
-                    <p class="mt-0.5 flex items-center gap-2 text-sm text-encre-soft">
-                      <span class="inline-flex items-center gap-1.5 text-xs font-bold" [class]="a.active ? 'text-menthe-deep' : 'text-encre-soft'">
+                    <a [routerLink]="['/annonces', a.id]" class="block text-sm font-semibold truncate hover:underline">{{ a.titre }}</a>
+                    <p class="mt-1 flex items-center gap-2 text-[13px] text-encre-soft min-w-0">
+                      <span class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            [class]="a.active ? 'bg-menthe-50 text-menthe-deep' : 'bg-encre/[0.06] text-encre-soft'">
                         <span class="size-1.5 rounded-full" [class]="a.active ? 'bg-menthe' : 'bg-encre/30'"></span>{{ a.active ? 'En ligne' : 'Masquée' }}
                       </span>
-                      <span class="truncate">{{ a.metier }}@if (a.ville) {, {{ a.ville }}} — {{ a.images.length }} photo(s)</span>
+                      <span class="truncate">{{ a.metier }}@if (a.ville) {, {{ a.ville }}} · {{ a.images.length }} photo(s)</span>
                     </p>
                   </div>
                 </div>
-                <p class="text-sm font-semibold tabular-nums">{{ a | price }}</p>
-                <app-stars [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="13" />
-                <div class="flex flex-wrap gap-1.5 md:w-64 md:justify-end">
+                <p class="text-sm font-semibold tabular-nums whitespace-nowrap">{{ a | price }}</p>
+                <app-stars class="whitespace-nowrap" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="13" />
+                <div class="flex gap-1.5 md:w-72 md:justify-end">
                   <a [routerLink]="['/espace/artisan/annonces', a.id, 'modifier']" class="dash-btn">Modifier</a>
                   <button type="button" class="dash-btn" [disabled]="busyId() === a.id" (click)="toggle(a)">{{ a.active ? 'Masquer' : 'Remettre en ligne' }}</button>
                   <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === a.id" (click)="remove(a)">Supprimer</button>
