@@ -1,8 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { mediaUrl } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
@@ -12,6 +11,7 @@ import { ArtisanService } from '../../core/services/artisan.service';
 import { AvisService } from '../../core/services/avis.service';
 import { DemandeService } from '../../core/services/demande.service';
 import { AvatarComponent } from '../../ui/avatar.component';
+import { PagerComponent } from '../../ui/pager.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarInputComponent } from '../../ui/star-input.component';
 import { StarsComponent } from '../../ui/stars.component';
@@ -19,7 +19,7 @@ import { StarsComponent } from '../../ui/stars.component';
 @Component({
   selector: 'app-annonce-detail-page',
   standalone: true,
-  imports: [DatePipe, FormsModule, RouterLink, AvatarComponent, PricePipe, StarInputComponent, StarsComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, PagerComponent, PricePipe, StarInputComponent, StarsComponent],
   templateUrl: './annonce-detail.page.html',
 })
 export class AnnonceDetailPage {
@@ -40,14 +40,17 @@ export class AnnonceDetailPage {
   protected readonly avis = signal<Avis[]>([]);
   protected readonly avisTotal = signal(0);
   protected readonly avisPage = signal(0);
-  protected readonly avisLast = signal(true);
+  protected readonly avisPages = signal(0);
+  protected readonly AVIS_PAR_PAGE = 5;
+  /** Avis du client connecté sur cette annonce, même s'il n'est pas sur la page affichée */
+  private readonly monAvisServeur = signal<Avis | null>(null);
   protected readonly notFound = signal(false);
   protected readonly imageIndex = signal(0);
 
   protected readonly isClient = computed(() => this.auth.role() === 'CLIENT');
   protected readonly isOwner = computed(() => this.annonce()?.artisanId === this.auth.userId());
   protected readonly images = computed(() => (this.annonce()?.images ?? []).map((i) => mediaUrl(i.url)));
-  protected readonly monAvis = computed(() => this.avis().find((a) => a.clientId === this.auth.userId()) ?? null);
+  protected readonly monAvis = computed(() => this.avis().find((a) => a.clientId === this.auth.userId()) ?? this.monAvisServeur());
 
   // Formulaire d'avis
   protected note = signal(0);
@@ -81,18 +84,26 @@ export class AnnonceDetailPage {
         this.annonce.set(a);
         this.artisans.get(a.artisanId).subscribe((ar) => this.artisan.set(ar));
         this.loadAvis(0);
+        this.loadMonAvis();
       },
       error: () => this.notFound.set(true),
     });
   }
 
-  protected loadAvis(page: number) {
-    this.avisApi.forAnnonce(Number(this.id()), page, 5).subscribe((p) => {
-      this.avis.update((list) => (page === 0 ? p.content : [...list, ...p.content]));
+  protected loadAvis(page: number, scroll = false) {
+    this.avisApi.forAnnonce(Number(this.id()), page, this.AVIS_PAR_PAGE).subscribe((p) => {
+      this.avis.set(p.content);
       this.avisTotal.set(p.totalElements);
       this.avisPage.set(p.number);
-      this.avisLast.set(p.last);
+      this.avisPages.set(p.totalPages);
+      if (scroll) document.getElementById('avis')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+  }
+
+  private loadMonAvis() {
+    if (!this.isClient()) return;
+    const id = Number(this.id());
+    this.avisApi.mine(0, 200).subscribe((p) => this.monAvisServeur.set(p.content.find((a) => a.annonceId === id) ?? null));
   }
 
   protected editAvis() {
@@ -117,13 +128,9 @@ export class AnnonceDetailPage {
         this.commentaire = '';
         this.note.set(0);
         // Rafraîchit la note moyenne et la liste
-        forkJoin([this.annonces.get(id), this.avisApi.forAnnonce(id, 0, 5)]).subscribe(([a, p]) => {
-          this.annonce.set(a);
-          this.avis.set(p.content);
-          this.avisTotal.set(p.totalElements);
-          this.avisPage.set(0);
-          this.avisLast.set(p.last);
-        });
+        this.annonces.get(id).subscribe((a) => this.annonce.set(a));
+        this.loadAvis(0);
+        this.loadMonAvis();
       },
       error: (err) => {
         this.avisSending.set(false);
@@ -137,6 +144,7 @@ export class AnnonceDetailPage {
     this.avisApi.delete(a.id).subscribe(() => {
       const id = Number(this.id());
       this.annonces.get(id).subscribe((an) => this.annonce.set(an));
+      this.monAvisServeur.set(null);
       this.loadAvis(0);
     });
   }

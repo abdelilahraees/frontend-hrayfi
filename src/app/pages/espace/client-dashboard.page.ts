@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -14,6 +14,7 @@ import { AvatarComponent } from '../../ui/avatar.component';
 import { BarChartComponent } from '../../ui/bar-chart.component';
 import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 import { IconComponent } from '../../ui/icon.component';
+import { PagerComponent, paginate } from '../../ui/pager.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarInputComponent } from '../../ui/star-input.component';
 import { StarsComponent } from '../../ui/stars.component';
@@ -23,7 +24,7 @@ import { STATUTS } from '../../ui/statut-badge.component';
 @Component({
   selector: 'app-client-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PagerComponent, PricePipe, StarInputComponent, StarsComponent, StatTileComponent],
   templateUrl: './client-dashboard.page.html',
 })
 export class ClientDashboardPage {
@@ -67,6 +68,14 @@ export class ClientDashboardPage {
     return searchDemandes(f === 'TOUTES' ? list : list.filter((d) => d.statut === f), this.recherche(), this.tri(), 'artisan');
   });
 
+  /** Pagination du suivi : revient à la première page quand le filtre, la recherche ou le tri change */
+  protected readonly PAR_PAGE = 6;
+  protected readonly pageDemandes = linkedSignal({ source: () => [this.filtre(), this.recherche(), this.tri()], computation: () => 0 });
+  protected readonly demandesPage = computed(() => paginate(this.demandesFiltrees() ?? [], this.pageDemandes(), this.PAR_PAGE));
+  protected readonly AVIS_PAR_PAGE = 4;
+  protected readonly pageAvis = signal(0);
+  protected readonly avisPage = computed(() => paginate(this.avis(), this.pageAvis(), this.AVIS_PAR_PAGE));
+
   protected exporter() {
     downloadCsv(this.demandesFiltrees() ?? [], `hrayfi-mes-demandes-${new Date().toISOString().slice(0, 10)}.csv`);
   }
@@ -81,8 +90,8 @@ export class ClientDashboardPage {
 
   ngOnInit() {
     this.dashboardApi.client().subscribe((s) => this.stats.set(s));
-    this.demandesApi.mine(0, 50).subscribe((p) => this.demandes.set(p.content));
-    this.avisApi.mine(0, 6).subscribe((p) => this.avis.set(p.content));
+    this.demandesApi.mine(0, 200).subscribe((p) => this.demandes.set(p.content));
+    this.avisApi.mine(0, 100).subscribe((p) => this.avis.set(p.content));
     this.messagesApi.conversations().subscribe((c) => this.conversations.set(c.slice(0, 4)));
   }
 

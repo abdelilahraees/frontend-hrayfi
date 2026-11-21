@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -14,6 +14,7 @@ import { BarChartComponent } from '../../ui/bar-chart.component';
 import { AvatarComponent } from '../../ui/avatar.component';
 import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 import { IconComponent } from '../../ui/icon.component';
+import { PagerComponent, paginate } from '../../ui/pager.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
@@ -25,7 +26,7 @@ type Filtre = StatutDemande | 'TOUTES';
 @Component({
   selector: 'app-artisan-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PagerComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './artisan-dashboard.page.html',
 })
 export class ArtisanDashboardPage {
@@ -86,6 +87,26 @@ export class ArtisanDashboardPage {
     return (this.demandesFiltrees() ?? []).filter((d) => d.statut === st);
   }
 
+  /** Pagination de la liste des demandes : revient à la première page quand le filtre, la recherche ou le tri change */
+  protected readonly PAR_PAGE = 10;
+  protected readonly pageDemandes = linkedSignal({ source: () => [this.filtre(), this.recherche(), this.tri()], computation: () => 0 });
+  protected readonly demandesPage = computed(() => paginate(this.demandesFiltrees() ?? [], this.pageDemandes(), this.PAR_PAGE));
+  /** Tableau : nombre de cartes visibles par colonne (« Afficher plus ») */
+  protected readonly CARTES = 6;
+  protected readonly colonnesOuvertes = linkedSignal<unknown, Set<StatutDemande>>({ source: () => this.recherche(), computation: () => new Set() });
+  protected ouvrirColonne(st: StatutDemande) {
+    this.colonnesOuvertes.update((set) => new Set(set).add(st));
+  }
+
+  protected readonly ANNONCES_PAR_PAGE = 5;
+  protected readonly pageAnnonces = signal(0);
+  protected readonly annoncesPage = computed(() => paginate(this.annonces() ?? [], this.pageAnnonces(), this.ANNONCES_PAR_PAGE));
+
+  protected changerPage(set: (p: number) => void, p: number) {
+    set(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
   protected readonly tendance = computed(() => monthTrend(this.demandes() ?? []));
   protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
@@ -115,7 +136,7 @@ export class ArtisanDashboardPage {
   protected refresh() {
     this.dashboardApi.artisan().subscribe((s) => this.stats.set(s));
     this.annoncesApi.mine().subscribe((p) => this.annonces.set(p.content));
-    this.demandesApi.received(0, 50).subscribe((p) => {
+    this.demandesApi.received(0, 200).subscribe((p) => {
       this.demandes.set(p.content);
       this.majLe.set(new Date());
     });

@@ -2,18 +2,19 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { Annonce, ArtisanPublic, Avis } from '../../core/models';
+import { Annonce, ArtisanPublic, Avis, Page } from '../../core/models';
 import { AnnonceService } from '../../core/services/annonce.service';
 import { ArtisanService } from '../../core/services/artisan.service';
 import { AvisService } from '../../core/services/avis.service';
 import { AnnonceCardComponent } from '../../ui/annonce-card.component';
 import { AvatarComponent } from '../../ui/avatar.component';
+import { PagerComponent } from '../../ui/pager.component';
 import { StarsComponent } from '../../ui/stars.component';
 
 @Component({
   selector: 'app-artisan-profile-page',
   standalone: true,
-  imports: [DatePipe, RouterLink, AnnonceCardComponent, AvatarComponent, StarsComponent],
+  imports: [DatePipe, RouterLink, AnnonceCardComponent, AvatarComponent, PagerComponent, StarsComponent],
   template: `
     @if (notFound()) {
       <section class="max-w-3xl mx-auto px-4 py-24 text-center">
@@ -25,7 +26,7 @@ import { StarsComponent } from '../../ui/stars.component';
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row gap-6 sm:items-center">
           <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="96" />
           <div class="flex-1">
-            <h1 class="text-5xl">{{ a.prenom }} {{ a.nom }}</h1>
+            <h1 class="text-4xl sm:text-5xl">{{ a.prenom }} {{ a.nom }}</h1>
             <p class="mt-2 text-lg text-encre-soft">{{ a.metier }}@if (a.ville) { · {{ a.ville }} }@if (a.tarifHoraire) { · {{ a.tarifHoraire }} MAD/h }</p>
             <app-stars class="mt-3" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="20" />
           </div>
@@ -41,18 +42,24 @@ import { StarsComponent } from '../../ui/stars.component';
           <p class="mt-3 max-w-3xl text-lg leading-relaxed whitespace-pre-line">{{ a.description }}</p>
         }
 
-        <h2 class="mt-12 text-3xl">Annonces <span class="text-encre-soft text-2xl">({{ annonces().length }})</span></h2>
+        @let ap = annonces();
+        <h2 id="annonces" class="mt-12 text-3xl scroll-mt-24">Annonces <span class="text-encre-soft text-xl">({{ ap?.totalElements ?? 0 }})</span></h2>
         <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (an of annonces(); track an.id) {
+          @for (an of ap?.content ?? []; track an.id) {
             <app-annonce-card [annonce]="an" />
           } @empty {
             <p class="text-encre-soft">Aucune annonce publiée pour le moment.</p>
           }
         </div>
+        @if (ap) {
+          <app-pager [page]="ap.number" [totalPages]="ap.totalPages" [totalElements]="ap.totalElements" [pageSize]="ap.size"
+                     label="annonces" (change)="loadAnnonces($event, true)" />
+        }
 
-        <h2 class="mt-14 text-3xl">Avis reçus <span class="text-encre-soft text-2xl">({{ a.nbAvis }})</span></h2>
+        @let rp = avis();
+        <h2 id="avis" class="mt-14 text-3xl scroll-mt-24">Avis reçus <span class="text-encre-soft text-xl">({{ rp?.totalElements ?? 0 }})</span></h2>
         <ul class="mt-6 grid md:grid-cols-2 gap-5">
-          @for (r of avis(); track r.id) {
+          @for (r of rp?.content ?? []; track r.id) {
             <li class="rounded-lg border border-encre/10 p-5">
               <div class="flex items-center gap-3">
                 <app-avatar [name]="r.clientNomComplet" [size]="40" />
@@ -69,6 +76,10 @@ import { StarsComponent } from '../../ui/stars.component';
             <li class="text-encre-soft">Pas encore d'avis.</li>
           }
         </ul>
+        @if (rp) {
+          <app-pager [page]="rp.number" [totalPages]="rp.totalPages" [totalElements]="rp.totalElements" [pageSize]="rp.size"
+                     label="avis" (change)="loadAvis($event, true)" />
+        }
       </section>
     } @else {
       <section class="max-w-7xl mx-auto px-4 py-10" aria-busy="true"><div class="skeleton h-32 !rounded-lg"></div></section>
@@ -85,16 +96,30 @@ export class ArtisanProfilePage {
   readonly id = input.required<string>();
 
   protected readonly artisan = signal<ArtisanPublic | null>(null);
-  protected readonly annonces = signal<Annonce[]>([]);
-  protected readonly avis = signal<Avis[]>([]);
+  protected readonly annonces = signal<Page<Annonce> | null>(null);
+  protected readonly avis = signal<Page<Avis> | null>(null);
   protected readonly notFound = signal(false);
   protected readonly isMe = computed(() => this.artisan()?.id === this.auth.userId());
 
   ngOnInit() {
     const id = Number(this.id());
     this.artisans.get(id).subscribe({ next: (a) => this.artisan.set(a), error: () => this.notFound.set(true) });
-    this.annoncesApi.byArtisan(id, 0, 24).subscribe((p) => this.annonces.set(p.content));
-    this.avisApi.forArtisan(id, 0, 10).subscribe((p) => this.avis.set(p.content));
+    this.loadAnnonces(0);
+    this.loadAvis(0);
+  }
+
+  protected loadAnnonces(page: number, scroll = false) {
+    this.annoncesApi.byArtisan(Number(this.id()), page, 6).subscribe((p) => {
+      this.annonces.set(p);
+      if (scroll) document.getElementById('annonces')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  protected loadAvis(page: number, scroll = false) {
+    this.avisApi.forArtisan(Number(this.id()), page, 6).subscribe((p) => {
+      this.avis.set(p);
+      if (scroll) document.getElementById('avis')?.scrollIntoView({ behavior: 'smooth' });
+    });
   }
 
   protected contact(artisanId: number) {

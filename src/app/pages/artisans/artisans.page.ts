@@ -74,7 +74,7 @@ const DISPO: Record<string, { label: string; cls: string }> = {
             <p class="sm:col-span-2 lg:col-span-3 rounded-lg border border-dashed border-encre/20 p-10 text-center text-encre-soft">Aucun artisan ne correspond à ces critères.</p>
           }
         </div>
-        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" (change)="go({ page: $event })" />
+        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" [totalElements]="s.page.totalElements" [pageSize]="s.page.size" label="artisans" (change)="go({ page: $event })" />
       } @else {
         <p class="rounded-lg bg-argile-50 p-6">Impossible de charger les artisans.</p>
       }
