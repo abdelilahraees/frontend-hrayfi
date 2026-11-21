@@ -50,10 +50,9 @@ export class AuthService {
       .pipe(switchMap((res) => this.start(res)));
   }
 
-  registerArtisan(body: RegisterArtisan): Observable<Me> {
-    return this.http
-      .post<AuthResponse>(`${API_URL}/api/auth/register/artisan`, body)
-      .pipe(switchMap((res) => this.start(res)));
+  /** Pas de connexion automatique : le compte artisan doit d'abord être validé par un administrateur. */
+  registerArtisan(body: RegisterArtisan): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${API_URL}/api/auth/register/artisan`, body);
   }
 
   updateProfile(body: UpdateProfile): Observable<Me> {
@@ -76,12 +75,12 @@ export class AuthService {
 
   /** Page d'accueil de l'espace connecté selon le rôle. */
   homeUrl(role: Role | null = this.role()): string {
-    return role === 'ARTISAN' ? '/espace/artisan' : '/espace/client';
+    return role === 'ADMIN' ? '/espace/admin' : role === 'ARTISAN' ? '/espace/artisan' : '/espace/client';
   }
 
   private start(res: AuthResponse): Observable<Me> {
     const session: Session = {
-      token: res.accessToken,
+      token: res.accessToken!,
       expiresAt: Date.now() + res.expiresInMs,
       userId: res.userId,
       email: res.email,

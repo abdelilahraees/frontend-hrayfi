@@ -2,11 +2,9 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
 import { METIERS, VILLES } from '../../core/metiers';
-import { Me } from '../../core/models';
 import { AuthVisualComponent } from './auth-visual.component';
 
 type Profil = 'CLIENT' | 'ARTISAN';
@@ -19,6 +17,27 @@ type Profil = 'CLIENT' | 'ARTISAN';
     <section class="py-12 lg:py-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12 items-start">
         <div class="lg:col-span-7 xl:col-span-6">
+          @if (enAttente(); as email) {
+            <div class="enter-rise">
+              <span class="grid size-14 place-items-center rounded-full bg-citron-50 text-[#9a6a00]" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+              </span>
+              <h1 class="mt-6 text-4xl sm:text-5xl">Compte créé, vérification en cours</h1>
+              <p class="mt-4 text-lg text-encre-soft leading-relaxed">
+                Merci ! L'équipe Hrayfi vérifie chaque artisan avant sa mise en ligne : identité, métier et zone d'intervention.
+                Cela prend en général 24 à 48 h.
+              </p>
+              <ol class="mt-8 space-y-4 border-l-2 border-menthe/30 pl-5">
+                <li><p class="font-semibold">Inscription reçue</p><p class="text-sm text-encre-soft">Compte {{ email }}</p></li>
+                <li><p class="font-semibold">Vérification par l'équipe Hrayfi</p><p class="text-sm text-encre-soft">Nous pouvons vous appeler pour confirmer votre activité.</p></li>
+                <li><p class="font-semibold">Connexion et première annonce</p><p class="text-sm text-encre-soft">Dès la validation, connectez-vous avec votre e-mail et votre mot de passe.</p></li>
+              </ol>
+              <div class="mt-10 flex flex-wrap gap-3">
+                <a routerLink="/" class="btn btn-menthe">Retour à l'accueil</a>
+                <a routerLink="/contact" class="btn btn-white">Une question ?</a>
+              </div>
+            </div>
+          } @else {
           <h1 class="text-5xl sm:text-6xl">Créer mon compte</h1>
           <p class="mt-4 text-lg text-encre-soft">Gratuit, en moins d'une minute.</p>
 
@@ -114,6 +133,7 @@ type Profil = 'CLIENT' | 'ARTISAN';
             Déjà inscrit ?
             <a routerLink="/login" class="font-semibold text-menthe-deep underline underline-offset-4">Se connecter</a>
           </p>
+          }
         </div>
 
         <div class="hidden lg:block lg:col-span-5 lg:col-start-8 xl:col-start-8 sticky top-28">
@@ -135,6 +155,8 @@ export class RegisterPage {
   protected readonly villes = VILLES;
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** E-mail du compte artisan créé, en attente de validation */
+  protected readonly enAttente = signal<string | null>(null);
   private readonly submitted = signal(false);
 
   protected readonly form = this.fb.group({
@@ -173,22 +195,32 @@ export class RegisterPage {
     this.loading.set(true);
     this.error.set(null);
     const base = { email: v.email.trim(), password: v.password, nom: v.nom.trim(), prenom: v.prenom.trim() };
-    const request$: Observable<Me> = this.isArtisan()
-      ? this.auth.registerArtisan({
+    const fail = (err: unknown) => {
+      this.loading.set(false);
+      this.error.set(errorMessage(err));
+    };
+    if (this.isArtisan()) {
+      this.auth
+        .registerArtisan({
           ...base,
           metier: v.metier.trim(),
           ville: v.ville.trim() || undefined,
           tarifHoraire: v.tarifHoraire,
           description: v.description.trim() || undefined,
         })
-      : this.auth.registerClient({ ...base, adresse: v.adresse.trim() || undefined });
-
-    request$.subscribe({
+        .subscribe({
+          next: (res) => {
+            this.loading.set(false);
+            this.enAttente.set(res.email);
+            window.scrollTo({ top: 0 });
+          },
+          error: fail,
+        });
+      return;
+    }
+    this.auth.registerClient({ ...base, adresse: v.adresse.trim() || undefined }).subscribe({
       next: (me) => this.router.navigateByUrl(this.auth.homeUrl(me.role)),
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(errorMessage(err));
-      },
+      error: fail,
     });
   }
 }

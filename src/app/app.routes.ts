@@ -82,6 +82,12 @@ export const routes: Routes = [
     title: 'Mon profil — Hrayfi',
   },
   {
+    path: 'espace/admin',
+    canActivate: [roleGuard('ADMIN')],
+    loadComponent: () => import('./pages/espace/admin-dashboard.page').then((m) => m.AdminDashboardPage),
+    title: 'Administration — Hrayfi',
+  },
+  {
     path: 'espace/artisan',
     canActivate: [roleGuard('ARTISAN')],
     loadComponent: () => import('./pages/espace/artisan-dashboard.page').then((m) => m.ArtisanDashboardPage),

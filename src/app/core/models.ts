@@ -1,6 +1,8 @@
 export type Role = 'CLIENT' | 'ARTISAN' | 'ADMIN';
 export type Disponibilite = 'DISPONIBLE' | 'OCCUPE' | 'INDISPONIBLE';
 export type StatutDemande = 'EN_ATTENTE' | 'ACCEPTEE' | 'REFUSEE' | 'TERMINEE';
+/** Validation d'un compte artisan par un administrateur */
+export type StatutValidation = 'EN_ATTENTE' | 'VALIDE' | 'REFUSE' | 'SUSPENDU';
 
 export interface Page<T> {
   content: T[];
@@ -19,12 +21,14 @@ export interface ApiError {
 }
 
 export interface AuthResponse {
-  accessToken: string;
+  /** null après l'inscription d'un artisan : le compte attend la validation d'un administrateur */
+  accessToken: string | null;
   tokenType: string;
   expiresInMs: number;
   userId: number;
   email: string;
   role: Role;
+  statutValidation: StatutValidation | null;
 }
 
 export interface Me {
@@ -229,4 +233,45 @@ export interface ClientDashboard {
   totalDepense: number;
   nbAvisDonnes: number;
   dernieresDemandes: Demande[];
+}
+
+// ---------- Administration ----------
+
+export interface AdminStats {
+  clients: number;
+  artisans: number;
+  artisansParStatut: Record<StatutValidation, number>;
+  annonces: number;
+  annoncesEnLigne: number;
+  demandes: number;
+  demandesParStatut: Record<StatutDemande, number>;
+  avis: number;
+  noteMoyenne: number;
+  volumeAffaires: number;
+}
+
+export interface AdminArtisan {
+  id: number;
+  prenom: string;
+  nom: string;
+  email: string;
+  metier: string;
+  ville: string | null;
+  tarifHoraire: number | null;
+  description: string | null;
+  createdAt: string;
+  statutValidation: StatutValidation;
+  motifRefus: string | null;
+  valideLe: string | null;
+  nbAnnonces: number;
+}
+
+export interface AdminUser {
+  id: number;
+  prenom: string;
+  nom: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+  statutValidation: StatutValidation | null;
 }
