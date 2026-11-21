@@ -4,60 +4,106 @@
 <app-dashboard-shell [name]="(u?.prenom ?? '') + ' ' + (u?.nom ?? '')" subtitle="Client" [items]="nav">
   <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
     <div>
-      <p class="text-sm text-encre-soft first-letter:uppercase">{{ today | date: 'EEEE d MMMM y' }}</p>
-      <h1 class="mt-1 text-3xl sm:text-4xl">Bonjour {{ u?.prenom }}</h1>
+      <p class="text-[13px] text-encre-soft first-letter:uppercase">{{ today | date: 'EEEE d MMMM y' }}</p>
+      <h1 class="mt-1 text-2xl sm:text-[28px]">Bonjour {{ u?.prenom }}</h1>
     </div>
-    <a routerLink="/annonces" class="dash-btn dash-btn-primary !px-4 !py-2.5">Trouver un artisan</a>
+    <a routerLink="/annonces" class="dash-btn dash-btn-primary !h-9 !px-3.5"><app-icon name="search" [size]="15" [stroke]="2.2" />Trouver un artisan</a>
   </header>
 
-  <div class="dash-panel mt-6 overflow-hidden grid grid-cols-2 lg:grid-cols-4 gap-px !bg-encre/10 [&>*]:bg-white">
-    <app-stat-tile label="Total dépensé" [value]="s ? (s.totalDepense | number: '1.0-0') + ' MAD' : '–'"
+  <div class="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <app-stat-tile label="Total dépensé" icon="wallet" [value]="s ? (s.totalDepense | number: '1.0-0') + ' MAD' : '–'"
                    [hint]="s ? s.demandesTermineesTotal + ' intervention(s) terminée(s)' : ''" />
-    <app-stat-tile label="Demandes en attente" [value]="s?.demandesEnAttente ?? '–'" [tone]="s?.demandesEnAttente ? 'text-[#a37b00]' : 'text-encre'"
-                   hint="En attente de réponse de l'artisan" />
-    <app-stat-tile label="Interventions prévues" [value]="s?.demandesAcceptees ?? '–'" hint="Acceptées par l'artisan" />
-    <app-stat-tile label="Avis publiés" [value]="s?.nbAvisDonnes ?? '–'" hint="Sur les annonces et interventions" />
+    <app-stat-tile label="Demandes en attente" icon="clock" [value]="s?.demandesEnAttente ?? '–'" [tone]="s?.demandesEnAttente ? 'text-[#a37b00]' : 'text-encre'"
+                   hint="En attente de l'artisan" />
+    <app-stat-tile label="Interventions prévues" icon="calendar" [value]="s?.demandesAcceptees ?? '–'" hint="Acceptées par l'artisan" />
+    <app-stat-tile label="Avis publiés" icon="star" [value]="s?.nbAvisDonnes ?? '–'" hint="Annonces et interventions" />
   </div>
 
-  <div class="mt-6 grid xl:grid-cols-3 gap-6 [&>*]:min-w-0">
-    <section class="dash-panel p-5 sm:p-6 xl:col-span-2" aria-labelledby="dep-titre">
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="dep-titre" class="font-sans text-base font-bold tracking-normal">Dépenses des 6 derniers mois</h2>
-        <p class="text-sm text-encre-soft">Total <strong class="text-encre tabular-nums">{{ totalPeriode() | number: '1.0-0' }} MAD</strong></p>
+  <div class="mt-4 sm:mt-5 grid xl:grid-cols-3 gap-4 sm:gap-5 [&>*]:min-w-0">
+    <section class="dash-panel xl:col-span-2" aria-labelledby="dep-titre">
+      <div class="dash-panel-head">
+        <h2 id="dep-titre" class="dash-title">Dépenses des 6 derniers mois</h2>
+        <p class="flex items-center gap-2 text-sm text-encre-soft">
+          @if (tendance() != null) {
+            <span class="rounded-md bg-encre/[0.05] px-1.5 py-0.5 text-xs font-semibold tabular-nums">{{ tendance()! > 0 ? '+' : '' }}{{ tendance() | number: '1.0-0' }} % ce mois</span>
+          }
+          Total <strong class="font-semibold text-encre tabular-nums">{{ totalPeriode() | number: '1.0-0' }} MAD</strong>
+        </p>
       </div>
-      @if (demandes() === null) {
-        <div class="skeleton mt-6 h-52 !rounded-xl"></div>
-      } @else {
-        <app-bar-chart class="mt-6" [months]="mois()" caption="Montant des interventions terminées par mois" />
-      }
+      <div class="p-5">
+        @if (demandes() === null) {
+          <div class="skeleton h-52 !rounded-lg"></div>
+        } @else {
+          <app-bar-chart [months]="mois()" caption="Montant des interventions terminées par mois"
+                         emptyHint="Le montant de vos interventions terminées s'affichera ici." />
+        }
+      </div>
     </section>
 
     <section class="dash-panel" aria-labelledby="agenda-titre">
-      <h2 id="agenda-titre" class="font-sans text-base font-bold tracking-normal px-5 sm:px-6 py-4 border-b border-encre/10">Prochaines interventions</h2>
-      <ul class="divide-y divide-encre/10">
+      <div class="dash-panel-head">
+        <h2 id="agenda-titre" class="dash-title flex items-center gap-2"><app-icon name="calendar" [size]="16" class="text-encre-soft" />Prochaines interventions</h2>
+      </div>
+      <ul class="divide-y divide-encre/[0.07]">
         @for (d of aVenir(); track d.id) {
-          <li class="flex items-center gap-4 px-5 sm:px-6 py-3.5">
-            <div class="w-12 shrink-0 rounded-lg bg-menthe-50 py-1.5 text-center leading-none">
-              <span class="block font-display text-xl font-bold text-menthe-deep">{{ d.dateIntervention | date: 'd' }}</span>
-              <span class="block mt-0.5 text-[11px] text-menthe-deep">{{ d.dateIntervention | date: 'MMM' }}</span>
+          <li class="flex items-center gap-4 px-5 py-3">
+            <div class="w-11 shrink-0 overflow-hidden rounded-lg border border-encre/10 text-center leading-none">
+              <span class="block bg-menthe-deep py-0.5 text-[10px] font-semibold uppercase text-white">{{ d.dateIntervention | date: 'MMM' }}</span>
+              <span class="block py-1.5 text-base font-semibold">{{ d.dateIntervention | date: 'd' }}</span>
             </div>
             <div class="min-w-0">
-              <p class="font-semibold truncate">{{ d.artisanNomComplet }}</p>
-              <p class="text-sm text-encre-soft truncate">{{ d.dateIntervention | date: "EEEE 'à' HH:mm" }}</p>
+              <p class="text-sm font-semibold truncate">{{ d.artisanNomComplet }}</p>
+              <p class="text-[13px] text-encre-soft truncate">{{ d.dateIntervention | date: "EEEE 'à' HH:mm" }}@if (d.annonceTitre) { · {{ d.annonceTitre }}}</p>
             </div>
           </li>
         } @empty {
-          <li class="px-5 sm:px-6 py-8 text-sm text-encre-soft">Aucune intervention prévue pour le moment.</li>
+          <li class="px-5 py-10 text-center">
+            <app-icon name="calendar" [size]="22" class="text-encre-soft/70" />
+            <p class="mt-2 text-sm text-encre-soft">Aucune intervention prévue pour le moment.</p>
+          </li>
         }
       </ul>
     </section>
   </div>
 
-  <div class="mt-6 grid xl:grid-cols-3 gap-6 [&>*]:min-w-0 items-start">
+  <div class="mt-4 sm:mt-5 grid xl:grid-cols-3 gap-4 sm:gap-5 [&>*]:min-w-0 items-start">
     <!-- Demandes -->
     <section class="dash-panel overflow-hidden xl:col-span-2" aria-labelledby="dem-titre">
-      <h2 id="dem-titre" class="font-sans text-base font-bold tracking-normal px-5 sm:px-6 py-4 border-b border-encre/10">Mes demandes</h2>
+      <div class="dash-panel-head flex-wrap">
+        <h2 id="dem-titre" class="dash-title">Mes demandes</h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="relative">
+            <span class="sr-only">Rechercher une demande</span>
+            <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+            <input type="search" class="dash-input w-48 !pl-8" placeholder="Artisan, annonce…" [ngModel]="recherche()" (ngModelChange)="recherche.set($event)" />
+          </label>
+          <label>
+            <span class="sr-only">Trier</span>
+            <select class="dash-input" [ngModel]="tri()" (ngModelChange)="tri.set($event)">
+              <option value="recentes">Plus récentes</option>
+              <option value="intervention">Date d'intervention</option>
+              <option value="montant">Montant</option>
+            </select>
+          </label>
+          <button type="button" class="dash-btn !h-9" (click)="exporter()" [disabled]="!demandesFiltrees()?.length" title="Exporter en CSV">
+            <app-icon name="download" [size]="15" /><span class="sr-only">Exporter en CSV</span>
+          </button>
+        </div>
+      </div>
+      @if (demandes()?.length) {
+        <div class="flex flex-wrap gap-1 px-5 pt-3" role="group" aria-label="Filtrer par statut">
+          @for (f of FILTRES; track f) {
+            <button type="button" (click)="filtre.set(f)" [attr.aria-pressed]="filtre() === f"
+                    class="rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors"
+                    [class]="filtre() === f ? 'bg-encre text-white' : 'text-encre-soft hover:text-encre hover:bg-encre/[0.04]'">
+              {{ f === 'TOUTES' ? 'Toutes' : STATUTS[f].label }}
+              <span class="ml-1 tabular-nums opacity-60">{{ f === 'TOUTES' ? demandes()!.length : repartition()[f] }}</span>
+            </button>
+          }
+        </div>
+      }
       @let list = demandes();
+      @let shown = demandesFiltrees() ?? [];
       @if (list === null) {
         <div class="p-5 space-y-3" aria-busy="true">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-12 !rounded-lg"></div> }</div>
       } @else if (!list.length) {
@@ -67,25 +113,25 @@
           <a routerLink="/annonces" class="dash-btn dash-btn-primary mt-5">Voir les annonces</a>
         </div>
       } @else {
-        <ul class="divide-y divide-encre/10">
-          @for (d of list; track d.id) {
-            <li class="px-5 sm:px-6 py-4">
+        <ul class="divide-y divide-encre/[0.07]">
+          @for (d of shown; track d.id) {
+            <li class="px-5 py-3.5">
               <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                 <div class="min-w-0 flex-1">
                   <div class="flex flex-wrap items-center gap-2">
-                    <a [routerLink]="['/artisans', d.artisanId]" class="font-semibold hover:underline">{{ d.artisanNomComplet }}</a>
+                    <a [routerLink]="['/artisans', d.artisanId]" class="text-sm font-semibold hover:underline">{{ d.artisanNomComplet }}</a>
                     <app-statut-badge [statut]="d.statut" />
                   </div>
-                  <p class="mt-0.5 text-sm text-encre-soft truncate">
+                  <p class="mt-0.5 text-[13px] text-encre-soft truncate">
                     {{ d.dateIntervention | date: "d MMM y, HH:mm" }}
-                    @if (d.annonceTitre) { — <a [routerLink]="['/annonces', d.annonceId]" class="font-semibold text-menthe-deep hover:underline">{{ d.annonceTitre }}</a> }
+                    @if (d.annonceTitre) { — <a [routerLink]="['/annonces', d.annonceId]" class="font-medium text-menthe-deep hover:underline">{{ d.annonceTitre }}</a> }
                   </p>
                 </div>
                 <p class="text-sm font-semibold tabular-nums sm:w-28 sm:text-right">
                   {{ d.prixFinal != null ? (d.prixFinal | price) : d.prixConvenu != null ? (d.prixConvenu | price) : '—' }}
                 </p>
                 <div class="flex flex-wrap gap-1.5 sm:justify-end">
-                  <a [routerLink]="['/messages', d.artisanId]" [queryParams]="{ annonce: d.annonceId }" class="dash-btn">Message</a>
+                  <a [routerLink]="['/messages', d.artisanId]" [queryParams]="{ annonce: d.annonceId }" class="dash-btn"><app-icon name="message" [size]="14" />Message</a>
                   @if (d.statut === 'TERMINEE' && !evaluated().has(d.id) && evaluating() !== d.id) {
                     <button type="button" class="dash-btn dash-btn-primary" (click)="startEval(d)">Évaluer</button>
                   }
@@ -93,7 +139,7 @@
               </div>
               @if (evaluated().has(d.id)) { <p class="mt-2 text-sm font-semibold text-menthe-deep">Merci pour votre évaluation.</p> }
               @if (evaluating() === d.id) {
-                <form class="enter-rise mt-3 rounded-xl bg-citron-50 p-4 space-y-3" (ngSubmit)="submitEval(d)">
+                <form class="enter-rise mt-3 rounded-lg border border-encre/10 bg-[#f4f7f6] p-4 space-y-3" (ngSubmit)="submitEval(d)">
                   <p class="text-sm font-semibold">Comment s'est passée l'intervention ?</p>
                   <app-star-input [(value)]="note" />
                   <textarea name="commentaire" rows="2" [(ngModel)]="commentaire" class="field !mt-0 !rounded-lg bg-white resize-y text-sm" placeholder="Votre commentaire (optionnel)"></textarea>
@@ -105,6 +151,12 @@
                 </form>
               }
             </li>
+          } @empty {
+            <li class="px-5 py-10 text-center">
+              <app-icon name="searchX" [size]="22" class="text-encre-soft/70" />
+              <p class="mt-2 text-sm font-medium">Aucune demande ne correspond</p>
+              <p class="mt-0.5 text-[13px] text-encre-soft">Changez le filtre ou le mot-clé.</p>
+            </li>
           }
         </ul>
       }
@@ -113,20 +165,20 @@
     <!-- Colonne latérale -->
     <div class="space-y-6">
       <section class="dash-panel" aria-labelledby="msg-titre">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-encre/10">
-          <h2 id="msg-titre" class="font-sans text-base font-bold tracking-normal">Messages</h2>
-          <a routerLink="/messages" class="text-sm font-semibold text-menthe-deep hover:underline">Tout voir</a>
+        <div class="dash-panel-head">
+          <h2 id="msg-titre" class="dash-title flex items-center gap-2"><app-icon name="message" [size]="16" class="text-encre-soft" />Messages</h2>
+          <a routerLink="/messages" class="inline-flex items-center gap-1 text-[13px] font-medium text-menthe-deep hover:underline">Tout voir<app-icon name="arrowRight" [size]="14" /></a>
         </div>
         <ul class="p-2">
           @for (c of conversations(); track c.interlocuteurId) {
             <li>
-              <a [routerLink]="['/messages', c.interlocuteurId]" class="flex items-center gap-3 rounded-xl p-3 hover:bg-[#f4f7f6]">
-                <app-avatar [name]="c.interlocuteurNomComplet" [size]="36" />
+              <a [routerLink]="['/messages', c.interlocuteurId]" class="flex items-center gap-3 rounded-lg p-2.5 hover:bg-[#f4f7f6]">
+                <app-avatar [name]="c.interlocuteurNomComplet" [size]="34" flat />
                 <span class="min-w-0 flex-1">
                   <span class="block text-sm font-semibold truncate">{{ c.interlocuteurNomComplet }}</span>
                   <span class="block text-sm text-encre-soft truncate">{{ c.dernierMessage }}</span>
                 </span>
-                @if (c.nonLus) { <span class="grid place-items-center min-w-5 h-5 px-1.5 rounded-full bg-citron text-xs font-bold tabular-nums">{{ c.nonLus }}</span> }
+                @if (c.nonLus) { <span class="grid place-items-center min-w-5 h-5 px-1.5 rounded-full bg-menthe-deep text-[11px] font-semibold text-white tabular-nums">{{ c.nonLus }}</span> }
               </a>
             </li>
           } @empty {
@@ -136,13 +188,15 @@
       </section>
 
       <section class="dash-panel" aria-labelledby="avis-titre">
-        <h2 id="avis-titre" class="font-sans text-base font-bold tracking-normal px-5 py-4 border-b border-encre/10">Mes avis</h2>
-        <ul class="divide-y divide-encre/10">
+        <div class="dash-panel-head">
+          <h2 id="avis-titre" class="dash-title flex items-center gap-2"><app-icon name="star" [size]="16" class="text-encre-soft" />Mes avis</h2>
+        </div>
+        <ul class="divide-y divide-encre/[0.07]">
           @for (a of avis(); track a.id) {
-            <li class="px-5 py-3.5">
-              <a [routerLink]="['/annonces', a.annonceId]" class="text-sm font-semibold hover:underline">{{ a.annonceTitre }}</a>
+            <li class="px-5 py-3">
+              <a [routerLink]="['/annonces', a.annonceId]" class="block text-sm font-semibold leading-snug hover:underline">{{ a.annonceTitre }}</a>
               <div class="mt-1"><app-stars [value]="a.note" [showValue]="false" [size]="13" /></div>
-              @if (a.commentaire) { <p class="mt-1 text-sm text-encre-soft line-clamp-2">{{ a.commentaire }}</p> }
+              @if (a.commentaire) { <p class="mt-1 text-[13px] leading-snug text-encre-soft line-clamp-2">{{ a.commentaire }}</p> }
             </li>
           } @empty {
             <li class="px-5 py-6 text-sm text-encre-soft">Vous n'avez pas encore donné d'avis.</li>

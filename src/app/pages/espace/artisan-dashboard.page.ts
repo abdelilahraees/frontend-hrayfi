@@ -9,9 +9,10 @@ import { Annonce, ArtisanDashboard, Demande, StatutDemande } from '../../core/mo
 import { AnnonceService } from '../../core/services/annonce.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
-import { countByStatut, monthlyTotals, upcoming } from '../../core/dashboard-stats';
+import { TriDemandes, countByStatut, downloadCsv, monthTrend, monthlyTotals, searchDemandes, upcoming } from '../../core/dashboard-stats';
 import { BarChartComponent } from '../../ui/bar-chart.component';
 import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
+import { IconComponent } from '../../ui/icon.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
@@ -23,7 +24,7 @@ type Filtre = StatutDemande | 'TOUTES';
 @Component({
   selector: 'app-artisan-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, BarChartComponent, DashboardShellComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, BarChartComponent, DashboardShellComponent, IconComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './artisan-dashboard.page.html',
 })
 export class ArtisanDashboardPage {
@@ -50,6 +51,9 @@ export class ArtisanDashboardPage {
   protected prixFinal: number | null = null;
 
   protected readonly filtre = signal<Filtre>('TOUTES');
+  protected readonly recherche = signal('');
+  protected readonly tri = signal<TriDemandes>('recentes');
+  protected readonly majLe = signal<Date | null>(null);
 
   protected readonly mediaUrl = mediaUrl;
   protected readonly STATUTS = STATUTS;
@@ -60,15 +64,16 @@ export class ArtisanDashboardPage {
   protected readonly nav = computed<DashNavItem[]>(() => {
     const o = this.ongletActif();
     return [
-      { label: "Vue d'ensemble", link: '/espace/artisan', active: o === 'apercu' },
-      { label: 'Demandes', link: '/espace/artisan', queryParams: { onglet: 'demandes' }, active: o === 'demandes', badge: this.stats()?.demandesEnAttente },
-      { label: 'Mes annonces', link: '/espace/artisan', queryParams: { onglet: 'annonces' }, active: o === 'annonces' },
-      { label: 'Messages', link: '/messages' },
-      { label: 'Profil', link: '/espace/profil' },
+      { label: "Vue d'ensemble", icon: 'home', link: '/espace/artisan', active: o === 'apercu' },
+      { label: 'Demandes', icon: 'inbox', link: '/espace/artisan', queryParams: { onglet: 'demandes' }, active: o === 'demandes', badge: this.stats()?.demandesEnAttente },
+      { label: 'Mes annonces', icon: 'list', link: '/espace/artisan', queryParams: { onglet: 'annonces' }, active: o === 'annonces' },
+      { label: 'Messages', icon: 'message', link: '/messages' },
+      { label: 'Profil', icon: 'user', link: '/espace/profil' },
     ];
   });
 
   protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
+  protected readonly tendance = computed(() => monthTrend(this.demandes() ?? []));
   protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
   protected readonly repartition = computed(() => countByStatut(this.demandes() ?? []));
   protected readonly aVenir = computed(() => upcoming(this.demandes() ?? []));
@@ -76,8 +81,13 @@ export class ArtisanDashboardPage {
   protected readonly demandesFiltrees = computed(() => {
     const f = this.filtre();
     const list = this.demandes();
-    return list && f !== 'TOUTES' ? list.filter((d) => d.statut === f) : list;
+    if (!list) return null;
+    return searchDemandes(f === 'TOUTES' ? list : list.filter((d) => d.statut === f), this.recherche(), this.tri(), 'client');
   });
+
+  protected exporter() {
+    downloadCsv(this.demandesFiltrees() ?? [], `hrayfi-demandes-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
 
   protected part(statut: StatutDemande) {
     const total = this.demandes()?.length;
@@ -91,7 +101,10 @@ export class ArtisanDashboardPage {
   protected refresh() {
     this.dashboardApi.artisan().subscribe((s) => this.stats.set(s));
     this.annoncesApi.mine().subscribe((p) => this.annonces.set(p.content));
-    this.demandesApi.received(0, 50).subscribe((p) => this.demandes.set(p.content));
+    this.demandesApi.received(0, 50).subscribe((p) => {
+      this.demandes.set(p.content);
+      this.majLe.set(new Date());
+    });
   }
 
   protected toggle(a: Annonce) {
