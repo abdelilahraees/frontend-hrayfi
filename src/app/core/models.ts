@@ -37,6 +37,7 @@ export interface Me {
   nom: string;
   prenom: string;
   role: Role;
+  telephone: string | null;
   createdAt: string;
   adresse: string | null;
   preferences: string | null;
@@ -45,6 +46,10 @@ export interface Me {
   description: string | null;
   ville: string | null;
   disponibilite: Disponibilite | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** true : centre de la ville, pas encore précisé sur la carte */
+  positionApprox: boolean | null;
 }
 
 export interface RegisterClient {
@@ -52,6 +57,7 @@ export interface RegisterClient {
   password: string;
   nom: string;
   prenom: string;
+  telephone?: string;
   adresse?: string;
 }
 
@@ -61,14 +67,31 @@ export interface RegisterArtisan {
   nom: string;
   prenom: string;
   metier: string;
+  telephone: string;
   ville?: string;
   tarifHoraire?: number | null;
   description?: string;
 }
 
 export type UpdateProfile = Partial<
-  Pick<Me, 'nom' | 'prenom' | 'adresse' | 'preferences' | 'metier' | 'tarifHoraire' | 'description' | 'ville' | 'disponibilite'>
+  Pick<Me, 'nom' | 'prenom' | 'telephone' | 'adresse' | 'preferences' | 'metier' | 'tarifHoraire' | 'description' | 'ville' | 'disponibilite' | 'latitude' | 'longitude'>
 >;
+
+/** Artisan trouvé autour d'une position (recherche sur la carte) */
+export interface ArtisanProche {
+  artisan: ArtisanPublic;
+  latitude: number;
+  longitude: number;
+  positionApprox: boolean;
+  distanceKm: number;
+  misEnAvant: boolean;
+}
+
+export interface VilleCoord {
+  nom: string;
+  latitude: number;
+  longitude: number;
+}
 
 export interface AnnonceImage {
   id: number;
@@ -91,6 +114,9 @@ export interface Annonce {
   images: AnnonceImage[];
   createdAt: string;
   updatedAt: string;
+  /** Mise en avant payée en cours */
+  sponsorisee: boolean;
+  sponsoriseJusquAu: string | null;
 }
 
 export interface AnnonceRequest {
@@ -128,6 +154,8 @@ export interface Avis {
   commentaire: string | null;
   createdAt: string;
   updatedAt: string;
+  /** L'auteur a eu une intervention terminée avec cet artisan */
+  verifie: boolean;
 }
 
 export interface ArtisanPublic {
@@ -248,6 +276,76 @@ export interface AdminStats {
   avis: number;
   noteMoyenne: number;
   volumeAffaires: number;
+  revenusMois: number;
+  revenusTotal: number;
+  prosPayants: number;
+  prosOfferts: number;
+  aRelancer: number;
+  annoncesMisesEnAvant: number;
+  revenusParMois: { annee: number; mois: number; total: number }[];
+}
+
+// ---------- Offre Pro et paiements (encaissés hors ligne) ----------
+
+export type StatutPro = 'AUCUN' | 'OFFERT' | 'PAYE' | 'EXPIRE';
+export type ObjetPaiement = 'ABONNEMENT_PRO' | 'MISE_EN_AVANT';
+export type MoyenPaiement = 'CASHPLUS' | 'WAFACASH' | 'VIREMENT' | 'ESPECES' | 'AUTRE';
+export type FiltreCompte = 'TOUS' | 'A_RELANCER' | 'PAYES' | 'OFFERTS' | 'EXPIRES';
+
+export interface Paiement {
+  id: number;
+  objet: ObjetPaiement;
+  montant: number;
+  moyen: MoyenPaiement;
+  reference: string | null;
+  dureeJours: number;
+  annonceId: number | null;
+  annonceTitre: string | null;
+  note: string | null;
+  enregistrePar: string | null;
+  createdAt: string;
+}
+
+export interface AdminCompte {
+  id: number;
+  prenom: string;
+  nom: string;
+  email: string;
+  telephone: string | null;
+  metier: string;
+  ville: string | null;
+  statutPro: StatutPro;
+  proJusquAu: string | null;
+  proOffert: boolean;
+  totalPaye: number;
+  nbAnnonces: number;
+  annoncesMisesEnAvant: number;
+  noteAdmin: string | null;
+  createdAt: string;
+}
+
+export interface AdminCompteDetail {
+  compte: AdminCompte;
+  paiements: Paiement[];
+  annonces: { id: number; titre: string; active: boolean; sponsoriseJusquAu: string | null }[];
+}
+
+export interface EnregistrerPaiement {
+  objet: ObjetPaiement;
+  montant: number;
+  moyen: MoyenPaiement;
+  reference?: string;
+  dureeJours: number;
+  annonceId?: number | null;
+  note?: string;
+}
+
+export interface Offre {
+  statutPro: StatutPro;
+  proJusquAu: string | null;
+  proOffert: boolean;
+  misesEnAvant: { id: number; titre: string; jusquAu: string }[];
+  paiements: Paiement[];
 }
 
 export interface AdminArtisan {

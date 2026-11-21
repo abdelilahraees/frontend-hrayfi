@@ -12,10 +12,14 @@ import { PricePipe } from './price.pipe';
   template: `
     @let a = annonce();
     <a [routerLink]="['/annonces', a.id]"
-       class="group flex h-full flex-col overflow-hidden rounded-lg border border-encre/15 bg-white transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_40px_-20px_rgb(23_35_31/0.35)]">
-      <div class="relative aspect-[4/3] overflow-hidden border-b-2 border-encre bg-menthe-50">
+       class="group flex h-full flex-col overflow-hidden rounded-lg border bg-white transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_16px_40px_-20px_rgb(23_35_31/0.35)]"
+       [class]="a.sponsorisee ? 'border-citron ring-2 ring-citron/40' : 'border-encre/15'">
+      <div class="relative aspect-[4/3] overflow-hidden border-b border-encre/10 bg-menthe-50">
         <img [src]="cover()" [alt]="a.titre" loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <span class="absolute left-3 top-3 rounded-full border border-encre/15 bg-citron px-3 py-1 text-sm font-bold">{{ a.metier }}</span>
+        <span class="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-sm font-semibold shadow-sm">{{ a.metier }}</span>
+        @if (a.sponsorisee) {
+          <span class="absolute right-3 top-3 rounded-full bg-encre px-2.5 py-1 text-xs font-semibold text-citron">Mis en avant</span>
+        }
         @if (a.images.length > 1) {
           <span class="absolute right-3 bottom-3 rounded-full bg-encre/80 px-2.5 py-1 text-xs font-semibold text-white">{{ a.images.length }} photos</span>
         }

@@ -32,7 +32,10 @@
           <a [routerLink]="['/messages', p.artisanId]" [queryParams]="{ annonce: p.annonceId }" class="dash-btn mt-3 w-full"><app-icon name="message" [size]="14" />Écrire à l'artisan</a>
         </div>
       } @else {
-        <a routerLink="/annonces" class="btn btn-citron self-start lg:self-center"><app-icon name="search" [size]="16" [stroke]="2.2" />Trouver un artisan</a>
+        <div class="flex flex-wrap gap-2 self-start lg:self-center">
+          <a routerLink="/carte" class="btn btn-citron"><app-icon name="pin" [size]="16" [stroke]="2.2" />Artisans autour de moi</a>
+          <a routerLink="/annonces" class="btn border-white/30 text-white hover:border-white hover:bg-white/10"><app-icon name="search" [size]="16" [stroke]="2.2" />Toutes les annonces</a>
+        </div>
       }
     </div>
   </section>

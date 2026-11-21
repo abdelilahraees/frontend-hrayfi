@@ -7,10 +7,10 @@ import { AvatarComponent } from './avatar.component';
 import { IconComponent, IconName } from './icon.component';
 import { KhatamComponent } from './khatam.component';
 
-export type DashSection = 'apercu' | 'demandes' | 'annonces' | 'profil' | 'messages' | 'validations' | 'utilisateurs' | 'avis';
+export type DashSection = 'apercu' | 'demandes' | 'annonces' | 'profil' | 'messages' | 'validations' | 'utilisateurs' | 'avis' | 'comptes';
 
 interface NavItem {
-  key: DashSection | 'recherche';
+  key: DashSection | 'recherche' | 'carte';
   label: string;
   icon: IconName;
   link: string;
@@ -145,6 +145,7 @@ export class DashboardShellComponent {
       return [
         admin('apercu', "Vue d'ensemble", 'home'),
         admin('validations', 'Artisans à valider', 'shield', this.pending()),
+        admin('comptes', 'Comptes & paiements', 'wallet'),
         admin('utilisateurs', 'Utilisateurs', 'user'),
         admin('annonces', 'Annonces', 'list'),
         admin('avis', 'Avis', 'star'),
@@ -162,6 +163,7 @@ export class DashboardShellComponent {
       : [
           { key: 'apercu', label: "Vue d'ensemble", icon: 'home', link: '/espace/client' },
           { key: 'recherche', label: 'Trouver un artisan', icon: 'search', link: '/annonces' },
+          { key: 'carte', label: 'Autour de moi', icon: 'pin', link: '/carte' },
           { key: 'messages', label: 'Messages', icon: 'message', link: '/messages', badge: this.unread() },
           { key: 'profil', label: 'Mon profil', icon: 'user', link: '/espace/profil' },
         ];

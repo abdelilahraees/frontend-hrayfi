@@ -26,6 +26,11 @@ export const routes: Routes = [
     title: 'Annonce — Hrayfi',
   },
   {
+    path: 'carte',
+    loadComponent: () => import('./pages/carte/carte.page').then((m) => m.CartePage),
+    title: 'Artisans autour de moi — Hrayfi',
+  },
+  {
     path: 'artisans',
     loadComponent: () => import('./pages/artisans/artisans.page').then((m) => m.ArtisansPage),
     title: 'Artisans — Hrayfi',

@@ -8,13 +8,14 @@ import { ArtisanService } from '../../core/services/artisan.service';
 import { AvisService } from '../../core/services/avis.service';
 import { AnnonceCardComponent } from '../../ui/annonce-card.component';
 import { AvatarComponent } from '../../ui/avatar.component';
+import { ContactWhatsappComponent } from '../../ui/contact-whatsapp.component';
 import { PagerComponent } from '../../ui/pager.component';
 import { StarsComponent } from '../../ui/stars.component';
 
 @Component({
   selector: 'app-artisan-profile-page',
   standalone: true,
-  imports: [DatePipe, RouterLink, AnnonceCardComponent, AvatarComponent, PagerComponent, StarsComponent],
+  imports: [DatePipe, RouterLink, AnnonceCardComponent, AvatarComponent, ContactWhatsappComponent, PagerComponent, StarsComponent],
   template: `
     @if (notFound()) {
       <section class="max-w-3xl mx-auto px-4 py-24 text-center">
@@ -31,7 +32,10 @@ import { StarsComponent } from '../../ui/stars.component';
             <app-stars class="mt-3" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="20" />
           </div>
           @if (!isMe() && auth.role() !== 'ARTISAN') {
-            <button type="button" class="btn btn-menthe" (click)="contact(a.id)">Contacter</button>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="btn btn-menthe" (click)="contact(a.id)">Contacter</button>
+              <app-contact-whatsapp [artisanId]="a.id" />
+            </div>
           }
         </div>
       </section>
@@ -64,7 +68,9 @@ import { StarsComponent } from '../../ui/stars.component';
               <div class="flex items-center gap-3">
                 <app-avatar [name]="r.clientNomComplet" [size]="40" />
                 <div>
-                  <p class="font-semibold">{{ r.clientNomComplet }}</p>
+                  <p class="flex flex-wrap items-center gap-2 font-semibold">{{ r.clientNomComplet }}
+                    @if (r.verifie) { <span class="rounded-full bg-menthe-50 px-2 py-0.5 text-xs font-medium text-menthe-deep" title="A fait appel à cet artisan via Hrayfi">✓ Client vérifié</span> }
+                  </p>
                   <app-stars [value]="r.note" [showValue]="false" [size]="14" />
                 </div>
                 <span class="ml-auto text-sm text-encre-soft">{{ r.createdAt | date: 'd MMM y' }}</span>

@@ -89,6 +89,14 @@ export class AnnoncesPage {
     { initialValue: { loading: true, page: null, error: false } as State },
   );
 
+  /** Emplacements « mis en avant » au-dessus des résultats (première page seulement) */
+  protected readonly sponsorisees = toSignal(
+    toObservable(this.criteria).pipe(
+      switchMap((c) => (c.page === 0 ? this.api.sponsorisees(c).pipe(catchError(() => of([] as Annonce[]))) : of([] as Annonce[]))),
+    ),
+    { initialValue: [] as Annonce[] },
+  );
+
   protected readonly activeCount = computed(
     () => [this.q(), this.metierActif(), this.ville(), this.noteMin(), this.prixMax()].filter(Boolean).length,
   );

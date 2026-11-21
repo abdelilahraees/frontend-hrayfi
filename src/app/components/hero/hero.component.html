@@ -32,6 +32,13 @@
           <button type="submit" class="btn btn-menthe m-1.5 !px-6">Rechercher</button>
         </div>
 
+        <a routerLink="/carte" class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-menthe-deep hover:underline">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linejoin="round" d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" />
+          </svg>
+          Ou voir les artisans les plus proches de chez vous sur la carte
+        </a>
+
         <div class="mt-5 flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
           <span class="text-encre-soft mr-2">Recherches fréquentes :</span>
           @for (p of popular; track p.label) {

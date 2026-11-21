@@ -51,6 +51,7 @@ export class HeaderComponent {
     { label: 'Accueil', href: '/' },
     { label: 'Annonces', href: '/annonces' },
     { label: 'Artisans', href: '/artisans' },
+    { label: 'Autour de moi', href: '/carte' },
     { label: 'Comment ça marche', href: '/how-it-works' },
     { label: 'Contact', href: '/contact' },
   ];

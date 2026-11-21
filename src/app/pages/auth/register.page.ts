@@ -75,6 +75,15 @@ type Profil = 'CLIENT' | 'ARTISAN';
                   <span class="mt-1.5 block text-sm text-[#b42323]">Saisissez une adresse e-mail valide.</span>
                 }
               </label>
+              <label class="block">
+                <span class="font-semibold">Téléphone</span>
+                <span class="text-encre-soft text-sm font-normal">{{ isArtisan() ? '' : ' (facultatif)' }}</span>
+                <input type="tel" formControlName="telephone" autocomplete="tel" inputmode="tel" class="field" placeholder="06 12 34 56 78"
+                       [attr.aria-invalid]="invalid('telephone')" />
+                <span class="mt-1.5 block text-sm" [class.text-[#b42323]]="invalid('telephone')" [class.text-encre-soft]="!invalid('telephone')">
+                  {{ invalid('telephone') ? 'Numéro marocain attendu, ex. 06 12 34 56 78.' : isArtisan() ? "L'équipe vous appelle pour vérifier votre compte. Les clients connectés peuvent vous écrire sur WhatsApp." : '' }}
+                </span>
+              </label>
               <label class="block sm:col-span-2">
                 <span class="font-semibold">Mot de passe</span>
                 <input type="password" formControlName="password" autocomplete="new-password" class="field" [attr.aria-invalid]="invalid('password')" />
@@ -164,6 +173,7 @@ export class RegisterPage {
     prenom: ['', Validators.required],
     nom: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
+    telephone: ['', Validators.pattern(/^\s*(\+212|00212|0)\s*[5-7]([\s.-]*\d){8}\s*$/)],
     password: ['', [Validators.required, Validators.minLength(8)]],
     adresse: [''],
     metier: [''],
@@ -181,16 +191,17 @@ export class RegisterPage {
     if (this.profil()?.toLowerCase() === 'artisan') this.form.controls.profil.setValue('ARTISAN');
   }
 
-  protected invalid(name: 'prenom' | 'nom' | 'email' | 'password' | 'metier') {
+  protected invalid(name: 'prenom' | 'nom' | 'email' | 'password' | 'metier' | 'telephone') {
     const c = this.form.controls[name];
     if (name === 'metier') return this.isArtisan() && !c.value.trim() && (c.touched || this.submitted());
+    if (name === 'telephone' && this.isArtisan() && !c.value.trim()) return c.touched || this.submitted();
     return c.invalid && (c.touched || this.submitted());
   }
 
   protected submit() {
     this.submitted.set(true);
     const v = this.form.getRawValue();
-    if (this.form.invalid || (this.isArtisan() && !v.metier.trim())) return;
+    if (this.form.invalid || (this.isArtisan() && (!v.metier.trim() || !v.telephone.trim()))) return;
 
     this.loading.set(true);
     this.error.set(null);
@@ -204,6 +215,7 @@ export class RegisterPage {
         .registerArtisan({
           ...base,
           metier: v.metier.trim(),
+          telephone: v.telephone.trim(),
           ville: v.ville.trim() || undefined,
           tarifHoraire: v.tarifHoraire,
           description: v.description.trim() || undefined,
@@ -218,7 +230,7 @@ export class RegisterPage {
         });
       return;
     }
-    this.auth.registerClient({ ...base, adresse: v.adresse.trim() || undefined }).subscribe({
+    this.auth.registerClient({ ...base, telephone: v.telephone.trim() || undefined, adresse: v.adresse.trim() || undefined }).subscribe({
       next: (me) => this.router.navigateByUrl(this.auth.homeUrl(me.role)),
       error: fail,
     });

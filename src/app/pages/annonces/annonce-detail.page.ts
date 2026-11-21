@@ -11,6 +11,7 @@ import { ArtisanService } from '../../core/services/artisan.service';
 import { AvisService } from '../../core/services/avis.service';
 import { DemandeService } from '../../core/services/demande.service';
 import { AvatarComponent } from '../../ui/avatar.component';
+import { ContactWhatsappComponent } from '../../ui/contact-whatsapp.component';
 import { PagerComponent } from '../../ui/pager.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarInputComponent } from '../../ui/star-input.component';
@@ -19,7 +20,7 @@ import { StarsComponent } from '../../ui/stars.component';
 @Component({
   selector: 'app-annonce-detail-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, PagerComponent, PricePipe, StarInputComponent, StarsComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, ContactWhatsappComponent, PagerComponent, PricePipe, StarInputComponent, StarsComponent],
   templateUrl: './annonce-detail.page.html',
 })
 export class AnnonceDetailPage {

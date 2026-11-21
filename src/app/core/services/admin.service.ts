@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_URL } from '../api.config';
-import { AdminArtisan, AdminStats, AdminUser, Annonce, Avis, Demande, Page, Role, StatutDemande, StatutValidation } from '../models';
+import { AdminArtisan, AdminCompte, AdminCompteDetail, AdminStats, AdminUser, Annonce, Avis, Demande, EnregistrerPaiement, FiltreCompte, Page, Role, StatutDemande, StatutValidation } from '../models';
 import { toParams } from './http-params';
 
 /** Endpoints /api/admin/** (rôle ADMIN). */
@@ -20,6 +20,22 @@ export class AdminService {
 
   changerStatut(id: number, statut: StatutValidation, motif?: string) {
     return this.http.patch<AdminArtisan>(`${this.base}/artisans/${id}/statut`, { statut, motif: motif || null });
+  }
+
+  comptes(filters: { filtre?: FiltreCompte; q?: string; page?: number; size?: number }) {
+    return this.http.get<Page<AdminCompte>>(`${this.base}/comptes`, { params: toParams(filters) });
+  }
+
+  compte(id: number) {
+    return this.http.get<AdminCompteDetail>(`${this.base}/comptes/${id}`);
+  }
+
+  enregistrerPaiement(id: number, body: EnregistrerPaiement) {
+    return this.http.post<AdminCompteDetail>(`${this.base}/comptes/${id}/paiements`, body);
+  }
+
+  modifierNote(id: number, note: string) {
+    return this.http.patch<AdminCompte>(`${this.base}/comptes/${id}/note`, { note });
   }
 
   utilisateurs(filters: { role?: Role | null; q?: string; page?: number; size?: number }) {

@@ -5,7 +5,9 @@ import { RouterLink } from '@angular/router';
 import { mediaUrl } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
-import { Annonce, ArtisanDashboard, Demande, StatutDemande } from '../../core/models';
+import { Annonce, ArtisanDashboard, Demande, Offre, StatutDemande } from '../../core/models';
+import { ArtisanService } from '../../core/services/artisan.service';
+import { HRAYFI_WHATSAPP, TARIFS, lienWhatsApp } from '../../core/whatsapp';
 import { AnnonceService } from '../../core/services/annonce.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
@@ -33,6 +35,7 @@ export class ArtisanDashboardPage {
   private readonly dashboardApi = inject(DashboardService);
   private readonly annoncesApi = inject(AnnonceService);
   private readonly demandesApi = inject(DemandeService);
+  private readonly artisansApi = inject(ArtisanService);
   protected readonly auth = inject(AuthService);
 
   /** ?onglet=apercu|annonces|demandes */
@@ -43,6 +46,14 @@ export class ArtisanDashboardPage {
   });
 
   protected readonly stats = signal<ArtisanDashboard | null>(null);
+  /** Offre Pro, mises en avant et paiements (encaissés hors ligne par l'équipe) */
+  protected readonly offre = signal<Offre | null>(null);
+  protected readonly TARIFS = TARIFS;
+  protected readonly contactEquipe = computed(() => {
+    const u = this.auth.user();
+    return lienWhatsApp(HRAYFI_WHATSAPP,
+      `Bonjour l'équipe Hrayfi, je suis ${u?.prenom ?? ''} ${u?.nom ?? ''} (${u?.email ?? ''}). Je souhaite prolonger mon offre Pro / mettre une annonce en avant.`);
+  });
   protected readonly annonces = signal<Annonce[] | null>(null);
   protected readonly demandes = signal<Demande[] | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -136,6 +147,7 @@ export class ArtisanDashboardPage {
   protected refresh() {
     this.dashboardApi.artisan().subscribe((s) => this.stats.set(s));
     this.annoncesApi.mine().subscribe((p) => this.annonces.set(p.content));
+    this.artisansApi.monOffre().subscribe((o) => this.offre.set(o));
     this.demandesApi.received(0, 200).subscribe((p) => {
       this.demandes.set(p.content);
       this.majLe.set(new Date());
