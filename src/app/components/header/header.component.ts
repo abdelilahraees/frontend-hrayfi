@@ -13,12 +13,13 @@ import {
 } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { RealtimeService } from '../../core/realtime.service';
+import { KhatamComponent } from '../../ui/khatam.component';
 import { NotificationBellComponent } from './notification-bell.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [NgClass, RouterLink, RouterLinkActive, NotificationBellComponent],
+  imports: [NgClass, RouterLink, RouterLinkActive, KhatamComponent, NotificationBellComponent],
   templateUrl: './header.component.html',
 })
 export class HeaderComponent {
@@ -50,6 +51,7 @@ export class HeaderComponent {
     { label: 'Accueil', href: '/' },
     { label: 'Annonces', href: '/annonces' },
     { label: 'Artisans', href: '/artisans' },
+    { label: 'Autour de moi', href: '/carte' },
     { label: 'Comment ça marche', href: '/how-it-works' },
     { label: 'Contact', href: '/contact' },
   ];

@@ -1,17 +1,22 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { mediaUrl } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
-import { Annonce, ArtisanDashboard, Demande, StatutDemande } from '../../core/models';
+import { Annonce, ArtisanDashboard, Demande, Offre, StatutDemande } from '../../core/models';
+import { ArtisanService } from '../../core/services/artisan.service';
 import { AnnonceService } from '../../core/services/annonce.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
-import { countByStatut, monthlyTotals, upcoming } from '../../core/dashboard-stats';
+import { TriDemandes, countByStatut, downloadCsv, monthTrend, monthlyTotals, qualiteProfil, salutation, searchDemandes, semaine, upcoming } from '../../core/dashboard-stats';
 import { BarChartComponent } from '../../ui/bar-chart.component';
-import { DashboardShellComponent, DashNavItem } from '../../ui/dashboard-shell.component';
+import { AvatarComponent } from '../../ui/avatar.component';
+import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
+import { IconComponent } from '../../ui/icon.component';
+import { MonOffreComponent } from './mon-offre.component';
+import { PagerComponent, paginate } from '../../ui/pager.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
@@ -23,13 +28,14 @@ type Filtre = StatutDemande | 'TOUTES';
 @Component({
   selector: 'app-artisan-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, BarChartComponent, DashboardShellComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, MonOffreComponent, PagerComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './artisan-dashboard.page.html',
 })
 export class ArtisanDashboardPage {
   private readonly dashboardApi = inject(DashboardService);
   private readonly annoncesApi = inject(AnnonceService);
   private readonly demandesApi = inject(DemandeService);
+  private readonly artisansApi = inject(ArtisanService);
   protected readonly auth = inject(AuthService);
 
   /** ?onglet=apercu|annonces|demandes */
@@ -40,6 +46,40 @@ export class ArtisanDashboardPage {
   });
 
   protected readonly stats = signal<ArtisanDashboard | null>(null);
+  /** Offre Pro, mises en avant et paiements (encaissés hors ligne par l'équipe) */
+  protected readonly offre = signal<Offre | null>(null);
+  /** Formulaire de choix d'offre ouvert dans « Mon offre » */
+  protected readonly choixOffre = signal(false);
+  /**
+   * Annonce affichée en haut de la page quand le Pro arrive à échéance (30 jours s'il est offert, 7 s'il est payé) ou est échu,
+   * tant qu'aucune demande d'offre n'est en cours.
+   */
+  protected readonly annonceOffre = computed(() => {
+    const o = this.offre();
+    if (!o?.proJusquAu || o.demandeEnCours) return null;
+    const jours = Math.ceil((new Date(o.proJusquAu).getTime() - Date.now()) / 86_400_000);
+    const date = new Date(o.proJusquAu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    if (o.statutPro === 'EXPIRE') {
+      return { titre: 'Votre offre Pro est arrivée à échéance', texte: `Depuis le ${date}, votre badge « Artisan Pro » n'est plus affiché aux clients. Choisissez une offre : l'équipe vous recontacte pour le paiement.` };
+    }
+    // Offert : prévenir un mois avant ; payé : une semaine avant, pour ne pas relancer quelqu'un qui vient de payer
+    if (jours <= (o.statutPro === 'OFFERT' ? 30 : 7)) {
+      return {
+        titre: o.statutPro === 'OFFERT' ? `Votre offre Pro offerte se termine dans ${jours} jour(s)` : `Votre offre Pro se termine dans ${jours} jour(s)`,
+        texte: `Le ${date}, votre badge « Artisan Pro » disparaîtra de votre profil, de vos annonces et de la carte. Prolongez dès maintenant, à partir de 149 MAD/mois.`,
+      };
+    }
+    return null;
+  });
+
+  protected ouvrirChoixOffre() {
+    this.choixOffre.set(true);
+    setTimeout(() => document.getElementById('mon-offre')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  protected chargerOffre() {
+    this.artisansApi.monOffre().subscribe((o) => this.offre.set(o));
+  }
   protected readonly annonces = signal<Annonce[] | null>(null);
   protected readonly demandes = signal<Demande[] | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -50,6 +90,9 @@ export class ArtisanDashboardPage {
   protected prixFinal: number | null = null;
 
   protected readonly filtre = signal<Filtre>('TOUTES');
+  protected readonly recherche = signal('');
+  protected readonly tri = signal<TriDemandes>('recentes');
+  protected readonly majLe = signal<Date | null>(null);
 
   protected readonly mediaUrl = mediaUrl;
   protected readonly STATUTS = STATUTS;
@@ -57,18 +100,52 @@ export class ArtisanDashboardPage {
   protected readonly FILTRES: Filtre[] = ['TOUTES', ...this.ORDRE];
   protected readonly today = new Date();
 
-  protected readonly nav = computed<DashNavItem[]>(() => {
-    const o = this.ongletActif();
-    return [
-      { label: "Vue d'ensemble", link: '/espace/artisan', active: o === 'apercu' },
-      { label: 'Demandes', link: '/espace/artisan', queryParams: { onglet: 'demandes' }, active: o === 'demandes', badge: this.stats()?.demandesEnAttente },
-      { label: 'Mes annonces', link: '/espace/artisan', queryParams: { onglet: 'annonces' }, active: o === 'annonces' },
-      { label: 'Messages', link: '/messages' },
-      { label: 'Profil', link: '/espace/profil' },
-    ];
+  protected readonly titre = computed(() => ({ apercu: "Vue d'ensemble", demandes: 'Demandes', annonces: 'Mes annonces' })[this.ongletActif()]);
+  protected readonly salut = salutation();
+
+  /** Vue des demandes : liste détaillée ou tableau par statut (kanban) */
+  protected readonly vue = signal<'liste' | 'tableau'>('liste');
+  protected readonly COLONNES: StatutDemande[] = ['EN_ATTENTE', 'ACCEPTEE', 'TERMINEE'];
+
+  protected readonly agenda = computed(() => semaine(this.demandes() ?? []));
+  protected readonly qualite = computed(() => qualiteProfil(this.auth.user(), this.annonces() ?? []));
+  /** Phrase de résumé du bandeau d'accueil */
+  protected readonly resume = computed(() => {
+    const attente = this.stats()?.demandesEnAttente ?? 0;
+    const auj = this.agenda()[0]?.demandes.length ?? 0;
+    const sem = this.agenda().reduce((n, j) => n + j.demandes.length, 0);
+    const demandes = attente ? `${attente} demande${attente > 1 ? 's' : ''} à traiter.` : 'Aucune demande en attente.';
+    const agenda = auj
+      ? `${auj} intervention${auj > 1 ? 's' : ''} aujourd'hui.`
+      : sem ? `${sem} intervention${sem > 1 ? 's' : ''} cette semaine.` : 'Agenda libre cette semaine.';
+    return `${demandes} ${agenda}`;
   });
+  protected colonne(st: StatutDemande) {
+    return (this.demandesFiltrees() ?? []).filter((d) => d.statut === st);
+  }
+
+  /** Pagination de la liste des demandes : revient à la première page quand le filtre, la recherche ou le tri change */
+  protected readonly PAR_PAGE = 10;
+  protected readonly pageDemandes = linkedSignal({ source: () => [this.filtre(), this.recherche(), this.tri()], computation: () => 0 });
+  protected readonly demandesPage = computed(() => paginate(this.demandesFiltrees() ?? [], this.pageDemandes(), this.PAR_PAGE));
+  /** Tableau : nombre de cartes visibles par colonne (« Afficher plus ») */
+  protected readonly CARTES = 6;
+  protected readonly colonnesOuvertes = linkedSignal<unknown, Set<StatutDemande>>({ source: () => this.recherche(), computation: () => new Set() });
+  protected ouvrirColonne(st: StatutDemande) {
+    this.colonnesOuvertes.update((set) => new Set(set).add(st));
+  }
+
+  protected readonly ANNONCES_PAR_PAGE = 5;
+  protected readonly pageAnnonces = signal(0);
+  protected readonly annoncesPage = computed(() => paginate(this.annonces() ?? [], this.pageAnnonces(), this.ANNONCES_PAR_PAGE));
+
+  protected changerPage(set: (p: number) => void, p: number) {
+    set(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   protected readonly mois = computed(() => monthlyTotals(this.demandes() ?? []));
+  protected readonly tendance = computed(() => monthTrend(this.demandes() ?? []));
   protected readonly totalPeriode = computed(() => this.mois().reduce((sum, m) => sum + m.total, 0));
   protected readonly repartition = computed(() => countByStatut(this.demandes() ?? []));
   protected readonly aVenir = computed(() => upcoming(this.demandes() ?? []));
@@ -76,8 +153,13 @@ export class ArtisanDashboardPage {
   protected readonly demandesFiltrees = computed(() => {
     const f = this.filtre();
     const list = this.demandes();
-    return list && f !== 'TOUTES' ? list.filter((d) => d.statut === f) : list;
+    if (!list) return null;
+    return searchDemandes(f === 'TOUTES' ? list : list.filter((d) => d.statut === f), this.recherche(), this.tri(), 'client');
   });
+
+  protected exporter() {
+    downloadCsv(this.demandesFiltrees() ?? [], `hrayfi-demandes-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
 
   protected part(statut: StatutDemande) {
     const total = this.demandes()?.length;
@@ -91,7 +173,11 @@ export class ArtisanDashboardPage {
   protected refresh() {
     this.dashboardApi.artisan().subscribe((s) => this.stats.set(s));
     this.annoncesApi.mine().subscribe((p) => this.annonces.set(p.content));
-    this.demandesApi.received(0, 50).subscribe((p) => this.demandes.set(p.content));
+    this.chargerOffre();
+    this.demandesApi.received(0, 200).subscribe((p) => {
+      this.demandes.set(p.content);
+      this.majLe.set(new Date());
+    });
   }
 
   protected toggle(a: Annonce) {

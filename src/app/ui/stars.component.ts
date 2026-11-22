@@ -9,7 +9,7 @@ import { Component, computed, input } from '@angular/core';
     <span class="relative inline-block leading-none tracking-[0.08em]" [style.font-size.px]="size()"
           role="img" [attr.aria-label]="'Note : ' + label() + ' sur 5'">
       <span class="text-encre/15" aria-hidden="true">★★★★★</span>
-      <span class="absolute inset-0 overflow-hidden whitespace-nowrap text-[#e9b800]" [style.width.%]="percent()" aria-hidden="true">★★★★★</span>
+      <span class="absolute inset-0 overflow-hidden whitespace-nowrap text-citron" [style.width.%]="percent()" aria-hidden="true">★★★★★</span>
     </span>
     @if (showValue()) {
       <span class="text-sm font-semibold">{{ count() ? label() : 'Nouveau' }}</span>

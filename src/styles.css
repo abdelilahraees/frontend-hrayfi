@@ -1,21 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Baloo+Bhaijaan+2:wght@700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @theme {
-  /* Hrayfi "menthe & soleil": mint tea on a sunny terrace */
-  --color-menthe: #22b07d;
-  --color-menthe-deep: #0e7a55; /* mint dark enough for text on white */
-  --color-menthe-50: #e9f8f1;
-  --color-argile: #f4b9a6;
-  --color-argile-50: #fdefea;
-  --color-citron: #ffe14d;
-  --color-citron-50: #fff9d9;
-  --color-encre: #10302a;
-  --color-encre-soft: #4a6660;
+  /* Hrayfi « zellige & chaux » : les matières de l'artisanat marocain.
+     Les noms de jetons historiques sont conservés : menthe = vert zellige, citron = safran,
+     argile = rose d'argile, encre = encre de cèdre. */
+  --color-menthe: #1f7a63;       /* vert zellige émaillé */
+  --color-menthe-deep: #0b4f40;  /* vert de Fès, texte et boutons */
+  --color-menthe-50: #e7f0ec;
+  --color-argile: #d9a08a;       /* argile rose */
+  --color-argile-50: #f7eae4;
+  --color-citron: #e0a526;       /* safran */
+  --color-citron-50: #fbf1dc;
+  --color-encre: #17231f;        /* encre de cèdre */
+  --color-encre-soft: #56635e;
+  --color-chaux: #f3f4f1;        /* mur à la chaux */
+  --color-nuit: #08372d;         /* zellige de nuit (pied de page) */
 
-  --font-sans: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
-  --font-display: 'Baloo 2', 'Atkinson Hyperlegible Next', sans-serif;
-  --font-arabic: 'Baloo Bhaijaan 2', sans-serif;
+  --font-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-display: 'Reem Kufi', 'IBM Plex Sans Arabic', sans-serif;
+  --font-arabic: 'Reem Kufi', sans-serif;
+  --font-ui: 'IBM Plex Sans Arabic', system-ui, sans-serif;
 }
 
 @layer base {
@@ -30,77 +35,95 @@
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 800;
-    line-height: 1.02;
-    letter-spacing: -0.015em;
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
   }
   :focus-visible {
-    outline: 3px solid var(--color-menthe);
+    outline: 2px solid var(--color-menthe);
     outline-offset: 3px;
-    border-radius: 6px;
+    border-radius: 4px;
   }
 }
 
 @layer components {
-  /* Chunky button: ink outline + solid ink shadow that the button sinks into on press */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border-2 border-encre px-6 py-3 font-display text-[17px] font-bold leading-none text-encre;
-    box-shadow: 0 4px 0 var(--color-encre);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent px-5 py-3 font-sans text-[15px] font-semibold leading-none text-encre
+      transition-colors duration-150 disabled:opacity-50;
   }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--color-encre); }
-  .btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--color-encre); }
-  .btn-citron { @apply bg-citron hover:bg-[#ffe86f]; }
-  .btn-menthe { @apply bg-menthe hover:bg-[#3cc292]; }
-  .btn-white { @apply bg-white hover:bg-menthe-50; }
+  .btn-menthe { @apply bg-menthe-deep text-white hover:bg-[#083d32]; }
+  .btn-citron { @apply bg-citron text-encre hover:bg-[#cf961c]; }
+  .btn-white { @apply border-encre/20 bg-white hover:border-encre/50; }
 
-  /* Radio rendered as a pill */
+  /* Radio rendu comme une pastille */
   .chip {
-    @apply inline-flex items-center gap-2 cursor-pointer select-none rounded-full border-2 border-encre/15 bg-white px-4 py-2 text-[15px] font-semibold transition-[color,background-color,border-color,transform] duration-150
-      hover:border-menthe active:scale-[0.96]
-      has-checked:border-encre has-checked:bg-menthe has-checked:text-encre
-      has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-menthe;
+    @apply inline-flex items-center gap-2 cursor-pointer select-none rounded-full border border-encre/15 bg-white px-3.5 py-1.5 text-sm font-medium transition-colors duration-150
+      hover:border-encre/40
+      has-checked:border-encre has-checked:bg-encre has-checked:text-white
+      has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-menthe;
   }
 
-  /* Espaces client / artisan : surfaces et boutons plus sobres que le site vitrine */
-  .bg-dash { background-color: #f4f7f6; }
-  .dash-panel { @apply rounded-2xl border border-encre/10 bg-white; }
+  /* Espaces client / artisan : outil de travail, surfaces sobres */
+  .dash { font-family: var(--font-ui); font-feature-settings: 'tnum'; }
+  .dash :is(h1, h2, h3, h4) { font-family: var(--font-ui); font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
+  .dash h1 { font-family: var(--font-display); }
+  .bg-dash { background-color: var(--color-chaux); }
+  .dash-panel { @apply rounded-lg border border-encre/10 bg-white; }
+  .dash-panel-head { @apply flex items-center justify-between gap-3 px-5 py-3.5 border-b border-encre/10; }
+  .dash-title { @apply text-[15px] font-semibold tracking-normal; }
   .dash-btn {
-    @apply inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-encre/15 bg-white px-3 py-1.5 text-sm font-semibold text-encre transition-colors
-      hover:border-encre/40 disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-encre/15 bg-white px-3 py-1.5 text-sm font-medium text-encre transition-colors
+      hover:border-encre/40 hover:bg-encre/[0.03] disabled:opacity-50;
   }
-  .dash-btn-primary { @apply border-encre bg-encre text-white hover:bg-encre/85; }
-  .dash-btn-accent { @apply border-menthe-deep bg-menthe-deep text-white hover:bg-[#0b6647]; }
-  .dash-btn-danger { @apply border-transparent bg-transparent text-[#b42323] hover:border-transparent hover:bg-argile-50; }
+  .dash-input {
+    @apply h-9 rounded-md border border-encre/15 bg-white px-3 text-sm text-encre placeholder:text-encre-soft/70
+      focus:outline-none focus:border-menthe-deep focus:ring-3 focus:ring-menthe/20;
+  }
+  .dash-btn-primary { @apply border-menthe-deep bg-menthe-deep text-white hover:bg-[#083d32]; }
+  .dash-btn-accent { @apply border-menthe bg-menthe text-white hover:bg-menthe-deep; }
+  .dash-btn-danger { @apply border-transparent bg-transparent text-[#a3321c] hover:border-transparent hover:bg-argile-50; }
 
   .field {
-    @apply mt-2 w-full rounded-2xl border-2 border-encre/15 bg-white px-4 py-3 text-base placeholder:text-encre-soft/60
-      focus:outline-none focus:border-menthe focus:ring-4 focus:ring-menthe/20
-      aria-invalid:border-[#d23c3c] aria-invalid:ring-[#d23c3c]/15;
+    @apply mt-2 w-full rounded-md border border-encre/20 bg-white px-3.5 py-2.5 text-base placeholder:text-encre-soft/60
+      focus:outline-none focus:border-menthe-deep focus:ring-3 focus:ring-menthe/20
+      aria-invalid:border-[#a3321c] aria-invalid:ring-[#a3321c]/15;
   }
 }
 
-/* Organic blob masks for photos; they slowly reshape on hover */
-.blob-a { border-radius: 58% 42% 52% 48% / 46% 56% 44% 54%; }
-.blob-b { border-radius: 44% 56% 40% 60% / 58% 42% 58% 42%; }
-.blob-c { border-radius: 63% 37% 56% 44% / 40% 50% 50% 60%; }
-.blob-a, .blob-b, .blob-c { transition: border-radius 0.7s var(--ease-out); }
-.group:hover .blob-a { border-radius: 45% 55% 45% 55% / 55% 45% 55% 45%; }
-.group:hover .blob-b { border-radius: 55% 45% 60% 40% / 45% 55% 40% 60%; }
-.group:hover .blob-c { border-radius: 48% 52% 42% 58% / 56% 44% 58% 42%; }
+/* Cadre en arc de porte (bab) pour les photos */
+.arch { border-radius: 50% 50% 4px 4px / 34% 34% 4px 4px; }
 
-/* Die-cut sticker look: white border + soft drop shadow around any SVG */
-.sticker {
-  filter: drop-shadow(2.5px 0 0 #fff) drop-shadow(-2.5px 0 0 #fff) drop-shadow(0 2.5px 0 #fff)
-    drop-shadow(0 -2.5px 0 #fff) drop-shadow(0 6px 8px rgb(16 48 42 / 0.18));
+/* Trame de zellige : réseau d'étoiles à huit branches (khatam), à poser sur un fond vert profond */
+.zellige {
+  background-color: var(--color-menthe-deep);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.13' stroke-width='1.2'%3E%3Cpath d='M24 24h32v32H24z'/%3E%3Cpath d='M40 17.4 62.6 40 40 62.6 17.4 40z'/%3E%3Cpath d='M40 0v17.4M40 62.6V80M0 40h17.4M62.6 40H80M0 0l24 24M80 0 56 24M0 80l24-24M80 80 56 56'/%3E%3C/g%3E%3C/svg%3E");
 }
-@keyframes wiggle {
-  0%, 100% { transform: rotate(var(--tilt, 0deg)); }
-  30% { transform: rotate(calc(var(--tilt, 0deg) - 10deg)) scale(1.06); }
-  60% { transform: rotate(calc(var(--tilt, 0deg) + 7deg)) scale(1.06); }
+.zellige-nuit { background-color: var(--color-nuit); }
+/* Barre latérale des espaces : même trame mais à peine visible, pour que le texte reste net */
+.zellige-sidebar {
+  background-color: var(--color-nuit);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.045' stroke-width='1.2'%3E%3Cpath d='M24 24h32v32H24z'/%3E%3Cpath d='M40 17.4 62.6 40 40 62.6 17.4 40z'/%3E%3Cpath d='M40 0v17.4M40 62.6V80M0 40h17.4M62.6 40H80M0 0l24 24M80 0 56 24M0 80l24-24M80 80 56 56'/%3E%3C/g%3E%3C/svg%3E");
 }
-.sticker { transform: rotate(var(--tilt, 0deg)); }
-.sticker:hover, .group:hover .sticker { animation: wiggle 0.55s var(--ease-out); }
+
+/* Carte des artisans (marqueurs Leaflet en divIcon) */
+.carte-pin {
+  display: grid; place-items: center; width: 100%; height: 100%;
+  border-radius: 999px; border: 2px solid #fff;
+  background: var(--color-menthe-deep); color: #fff;
+  font: 600 12px/1 var(--font-sans);
+  box-shadow: 0 4px 10px -2px rgb(8 55 45 / 0.45);
+  transition: transform 0.15s;
+}
+.carte-pin:hover { transform: scale(1.08); }
+.carte-pin--approx { border-style: dashed; }
+.carte-pin--actif { background: var(--color-citron); color: var(--color-encre); font-size: 14px; border-width: 3px; }
+.carte-moi {
+  display: block; width: 100%; height: 100%; border-radius: 999px;
+  background: #2563eb; border: 3px solid #fff; box-shadow: 0 0 0 6px rgb(37 99 235 / 0.2);
+}
+.leaflet-container { font-family: var(--font-sans); }
+/* Fond de carte un peu désaturé pour laisser ressortir les marqueurs */
+.leaflet-tile-pane { filter: saturate(0.7) contrast(0.95); }
 
 /* ===== Motion =====
    Used with Angular's native animate.enter / animate.leave (no @angular/animations). */
@@ -118,22 +141,18 @@
 .enter-rise { animation: rise-in 0.35s var(--ease-out); }
 .leave-fade { animation: fade-out 0.15s ease-in forwards; }
 
-/* The one page-load moment: hero stickers get slapped on, one after another */
-@keyframes slap {
-  0% { opacity: 0; transform: rotate(var(--tilt, 0deg)) scale(1.6); }
-  70% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(0.94); }
-  100% { opacity: 1; transform: rotate(var(--tilt, 0deg)) scale(1); }
-}
-.slap-in { animation: slap 0.45s var(--ease-back) both; }
+/* Le seul moment animé au chargement : la photo du hero se dévoile de bas en haut dans son arc */
+@keyframes arch-reveal { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
+.arch-reveal { animation: arch-reveal 0.9s var(--ease-out) 0.1s both; }
 
 /* Press feedback for non-.btn actions */
 .press { transition: transform 0.12s ease, background-color 0.15s, color 0.15s, border-color 0.15s; }
 .press:active { transform: scale(0.96); }
 
-/* Skeleton: mint-tinted surface with a slow sheen */
+/* Skeleton: lime-plaster surface with a slow sheen */
 @keyframes sheen { from { background-position: 150% 0; } to { background-position: -50% 0; } }
 .skeleton {
-  background: linear-gradient(100deg, #d6efe3 35%, #ecf8f2 50%, #d6efe3 65%);
+  background: linear-gradient(100deg, #e3e7e3 35%, #f1f3f0 50%, #e3e7e3 65%);
   background-size: 200% 100%;
   animation: sheen 1.6s linear infinite;
   border-radius: 999px;
@@ -152,10 +171,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .slap-in, .sticker, .sticker:hover, .group:hover .sticker,
+  .arch-reveal,
   .enter-drop, .leave-lift, .enter-rise, .leave-fade,
   .skeleton, .success-pop * { animation: none !important; }
-  .slap-in { opacity: 1; }
-  .btn:hover, .btn:active, .press:active { transform: none; }
-  .blob-a, .blob-b, .blob-c { transition: none; }
+  .press:active { transform: none; }
 }

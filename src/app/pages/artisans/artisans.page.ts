@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { BadgeProComponent } from '../../ui/badge-pro.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,13 +22,23 @@ const DISPO: Record<string, { label: string; cls: string }> = {
 @Component({
   selector: 'app-artisans-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, AvatarComponent, PagerComponent, StarsComponent],
+  imports: [BadgeProComponent, FormsModule, RouterLink, AvatarComponent, PagerComponent, StarsComponent],
   template: `
     @let s = state();
-    <section class="bg-menthe-50 border-b-2 border-encre/10">
+    <section class="bg-chaux border-b border-encre/10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-        <h1 class="text-5xl sm:text-6xl">Les artisans</h1>
-        <p class="mt-3 text-lg text-encre-soft">Profils, spécialités et réputation d'après les avis clients.</p>
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h1 class="text-5xl sm:text-6xl">Les artisans</h1>
+            <p class="mt-3 text-lg text-encre-soft">Profils, spécialités et réputation d'après les avis clients.</p>
+          </div>
+          <a routerLink="/carte" class="btn btn-white self-start sm:self-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linejoin="round" d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" />
+            </svg>
+            Voir sur la carte
+          </a>
+        </div>
         <form class="mt-7 grid sm:grid-cols-[1fr_200px_200px_auto] gap-3" (ngSubmit)="submit()" role="search">
           <label><span class="sr-only">Nom ou spécialité</span>
             <input name="q" [(ngModel)]="qDraft" type="search" placeholder="Nom ou spécialité" class="field !mt-0 bg-white" /></label>
@@ -49,17 +60,17 @@ const DISPO: Record<string, { label: string; cls: string }> = {
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       @if (s.loading) {
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true">
-          @for (i of [1, 2, 3]; track i) { <div class="skeleton !rounded-[28px] h-56"></div> }
+          @for (i of [1, 2, 3]; track i) { <div class="skeleton !rounded-lg h-56"></div> }
         </div>
       } @else if (s.page) {
         <p class="mb-5 text-encre-soft"><strong class="text-encre">{{ s.page.totalElements }}</strong> artisan(s)</p>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           @for (a of s.page.content; track a.id) {
-            <a [routerLink]="['/artisans', a.id]" class="enter-rise flex flex-col rounded-[28px] border-2 border-encre bg-white p-6 transition-transform hover:-translate-y-1 hover:shadow-[0_6px_0_var(--color-encre)]">
+            <a [routerLink]="['/artisans', a.id]" class="enter-rise flex flex-col rounded-lg border border-encre/15 bg-white p-6 transition-transform hover:-translate-y-1 hover:shadow-[0_16px_40px_-20px_rgb(23_35_31/0.35)]">
               <div class="flex items-center gap-4">
                 <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="60" />
                 <div>
-                  <p class="font-display text-2xl font-bold leading-tight">{{ a.prenom }} {{ a.nom }}</p>
+                  <p class="font-display text-2xl font-bold leading-tight">{{ a.prenom }} {{ a.nom }}@if (a.pro) { <app-badge-pro class="ml-1" /> }</p>
                   <p class="text-encre-soft">{{ a.metier }}@if (a.ville) { · {{ a.ville }} }</p>
                 </div>
               </div>
@@ -71,12 +82,12 @@ const DISPO: Record<string, { label: string; cls: string }> = {
               </div>
             </a>
           } @empty {
-            <p class="sm:col-span-2 lg:col-span-3 rounded-[28px] border-2 border-dashed border-encre/20 p-10 text-center text-encre-soft">Aucun artisan ne correspond à ces critères.</p>
+            <p class="sm:col-span-2 lg:col-span-3 rounded-lg border border-dashed border-encre/20 p-10 text-center text-encre-soft">Aucun artisan ne correspond à ces critères.</p>
           }
         </div>
-        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" (change)="go({ page: $event })" />
+        <app-pager [page]="s.page.number" [totalPages]="s.page.totalPages" [totalElements]="s.page.totalElements" [pageSize]="s.page.size" label="artisans" (change)="go({ page: $event })" />
       } @else {
-        <p class="rounded-3xl bg-argile-50 p-6">Impossible de charger les artisans.</p>
+        <p class="rounded-lg bg-argile-50 p-6">Impossible de charger les artisans.</p>
       }
     </section>
   `,

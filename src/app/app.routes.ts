@@ -26,6 +26,11 @@ export const routes: Routes = [
     title: 'Annonce — Hrayfi',
   },
   {
+    path: 'carte',
+    loadComponent: () => import('./pages/carte/carte.page').then((m) => m.CartePage),
+    title: 'Artisans autour de moi — Hrayfi',
+  },
+  {
     path: 'artisans',
     loadComponent: () => import('./pages/artisans/artisans.page').then((m) => m.ArtisansPage),
     title: 'Artisans — Hrayfi',
@@ -80,6 +85,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/espace/profil.page').then((m) => m.ProfilPage),
     title: 'Mon profil — Hrayfi',
+  },
+  {
+    path: 'espace/admin',
+    canActivate: [roleGuard('ADMIN')],
+    loadComponent: () => import('./pages/espace/admin-dashboard.page').then((m) => m.AdminDashboardPage),
+    title: 'Administration — Hrayfi',
   },
   {
     path: 'espace/artisan',

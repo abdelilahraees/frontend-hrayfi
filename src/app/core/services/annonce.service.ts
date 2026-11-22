@@ -13,6 +13,13 @@ export class AnnonceService {
     return this.http.get<Page<Annonce>>(this.base, { params: toParams({ ...s }) });
   }
 
+  /** Jusqu'à 3 annonces mises en avant pour les mêmes filtres (emplacements en tête des résultats) */
+  sponsorisees(s: AnnonceSearch) {
+    const { page, size, sort, ...filtres } = s as AnnonceSearch & { page?: number; size?: number; sort?: string };
+    void page; void size; void sort;
+    return this.http.get<Annonce[]>(`${this.base}/sponsorisees`, { params: toParams({ ...filtres }) });
+  }
+
   metiers() {
     return this.http.get<MetierCount[]>(`${this.base}/metiers`);
   }

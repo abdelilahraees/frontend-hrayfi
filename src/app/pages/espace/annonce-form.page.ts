@@ -8,6 +8,7 @@ import { errorMessage } from '../../core/http-error';
 import { METIERS, VILLES } from '../../core/metiers';
 import { Annonce, AnnonceImage } from '../../core/models';
 import { AnnonceService } from '../../core/services/annonce.service';
+import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 
 const MAX_IMAGES = 8;
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -19,7 +20,7 @@ type NewImage = { file: File; preview: string };
 @Component({
   selector: 'app-annonce-form-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, DashboardShellComponent],
   templateUrl: './annonce-form.page.html',
 })
 export class AnnonceFormPage {

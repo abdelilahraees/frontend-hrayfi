@@ -1,0 +1,736 @@
+@let s = stats();
+
+<app-dashboard-shell [active]="ongletActif()" [title]="titre()" [pending]="aValider() || undefined" [pendingOffres]="s?.demandesOffreEnAttente || undefined">
+  @if (toast()) {
+    <p role="status" class="enter-rise fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-md bg-encre px-4 py-3 text-sm text-white shadow-lg">
+      <app-icon name="check" [size]="16" class="text-citron" />{{ toast() }}
+    </p>
+  }
+  @if (error()) {
+    <p role="alert" class="mb-5 flex items-start justify-between gap-3 rounded-md border border-[#a3321c]/30 bg-argile-50 px-4 py-3 text-sm">
+      {{ error() }}
+      <button type="button" class="text-encre-soft hover:text-encre" (click)="error.set(null)" aria-label="Fermer"><app-icon name="close" [size]="14" /></button>
+    </p>
+  }
+
+  @switch (ongletActif()) {
+    <!-- ================= Vue d'ensemble ================= -->
+    @case ('apercu') {
+      <section class="zellige rounded-lg px-6 py-7 sm:px-8 text-white">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div>
+            <p class="text-sm text-white/70 first-letter:uppercase">{{ today | date: 'EEEE d MMMM y' }}</p>
+            <h1 class="mt-2 text-3xl sm:text-4xl">
+              {{ salut.fr }} <span class="ml-2 font-arabic text-2xl text-citron" lang="ar">{{ salut.ar }}</span>
+            </h1>
+            <p class="mt-2 text-white/80">
+              @if (aValider()) { {{ aValider() }} inscription(s) d'artisans attendent votre validation. }
+              @else { Aucune inscription en attente. }
+              @if (s?.demandesOffreEnAttente) {
+                <a routerLink="/espace/admin" [queryParams]="{ onglet: 'offres' }" class="underline underline-offset-4 hover:text-white">{{ s!.demandesOffreEnAttente }} demande(s) d'offre à traiter.</a>
+              }
+            </p>
+          </div>
+          @if (aValider()) {
+            <a routerLink="/espace/admin" [queryParams]="{ onglet: 'validations' }" class="btn btn-citron !py-2.5 self-start">
+              <app-icon name="shield" [size]="16" />Traiter les inscriptions
+            </a>
+          }
+        </div>
+      </section>
+
+      <div class="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <app-stat-tile label="Clients inscrits" icon="user" [value]="s ? ((s.clients | number) ?? '') : '–'" hint="Comptes particuliers" />
+        <app-stat-tile label="Artisans validés" icon="shield" [value]="s ? ((s.artisansParStatut.VALIDE | number) ?? '') : '–'"
+                       [hint]="s ? s.artisansParStatut.EN_ATTENTE + ' en attente · ' + s.artisansParStatut.SUSPENDU + ' suspendu(s)' : ''" />
+        <app-stat-tile label="Annonces en ligne" icon="list" [value]="s ? ((s.annoncesEnLigne | number) ?? '') : '–'"
+                       [hint]="s ? 'sur ' + s.annonces + ' publiées' : ''" />
+        <app-stat-tile label="Volume d'affaires" icon="wallet" [value]="s ? (s.volumeAffaires | number: '1.0-0') + ' MAD' : '–'"
+                       [hint]="s ? s.demandesParStatut.TERMINEE + ' interventions terminées' : ''" />
+      </div>
+
+      <!-- Revenus de la plateforme (paiements encaissés hors ligne) -->
+      <section class="dash-panel mt-5" aria-labelledby="rev-titre">
+        <div class="dash-panel-head">
+          <h2 id="rev-titre" class="dash-title flex items-center gap-2"><app-icon name="wallet" [size]="16" class="text-menthe-deep" />Revenus Hrayfi</h2>
+          <a routerLink="/espace/admin" [queryParams]="{ onglet: 'comptes' }" class="text-[13px] font-medium text-menthe-deep hover:underline">Comptes & paiements</a>
+        </div>
+        <div class="grid lg:grid-cols-[260px_1fr] gap-6 p-5">
+          <dl class="grid grid-cols-2 lg:grid-cols-1 gap-4 content-start">
+            <div><dt class="text-[13px] text-encre-soft">Encaissé ce mois</dt><dd class="mt-1 font-display text-2xl tabular-nums">{{ s ? (s.revenusMois | number: '1.0-0') : '–' }} MAD</dd></div>
+            <div><dt class="text-[13px] text-encre-soft">Total encaissé</dt><dd class="mt-1 font-display text-2xl tabular-nums">{{ s ? (s.revenusTotal | number: '1.0-0') : '–' }} MAD</dd></div>
+            <div><dt class="text-[13px] text-encre-soft">Pro payés · offerts</dt><dd class="mt-1 text-lg font-semibold tabular-nums">{{ s?.prosPayants ?? '–' }} · {{ s?.prosOfferts ?? '–' }}</dd></div>
+            <div>
+              <dt class="text-[13px] text-encre-soft">À relancer</dt>
+              <dd class="mt-1 text-lg font-semibold tabular-nums">
+                <a routerLink="/espace/admin" [queryParams]="{ onglet: 'comptes' }" class="text-[#9a6a00] hover:underline">{{ s?.aRelancer ?? '–' }} compte(s)</a>
+              </dd>
+            </div>
+          </dl>
+          <app-bar-chart [months]="revenusMois()" caption="Paiements encaissés par mois" emptyHint="Les paiements enregistrés apparaîtront ici." />
+        </div>
+      </section>
+
+      <div class="mt-5 grid xl:grid-cols-3 gap-5 [&>*]:min-w-0 items-start">
+        <!-- File de validation -->
+        <section class="dash-panel xl:col-span-2" aria-labelledby="file-titre">
+          <div class="dash-panel-head">
+            <h2 id="file-titre" class="dash-title flex items-center gap-2"><app-icon name="shield" [size]="16" class="text-menthe-deep" />Inscriptions à valider</h2>
+            <a routerLink="/espace/admin" [queryParams]="{ onglet: 'validations' }" class="text-[13px] font-medium text-menthe-deep hover:underline">Tout voir</a>
+          </div>
+          <ul class="divide-y divide-encre/[0.07]">
+            @for (a of enAttente()?.content ?? []; track a.id) {
+              <li class="flex flex-wrap items-center gap-4 px-5 py-3.5">
+                <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="38" />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold">{{ a.prenom }} {{ a.nom }}</p>
+                  <p class="truncate text-[13px] text-encre-soft">{{ a.metier }}@if (a.ville) {, {{ a.ville }}} · inscrit le {{ a.createdAt | date: 'd MMM' }}</p>
+                </div>
+                <div class="flex gap-1.5">
+                  <a routerLink="/espace/admin" [queryParams]="{ onglet: 'validations' }" class="dash-btn">Examiner</a>
+                  <button type="button" class="dash-btn dash-btn-primary" [disabled]="busyId() === a.id" (click)="valider(a)">Valider</button>
+                </div>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center">
+                <app-icon name="check" [size]="24" class="text-menthe" />
+                <p class="mt-2 text-sm font-medium">Aucune inscription en attente</p>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <!-- Activité -->
+        <section class="dash-panel" aria-labelledby="act-titre">
+          <div class="dash-panel-head">
+            <h2 id="act-titre" class="dash-title">Activité de la plateforme</h2>
+          </div>
+          @if (s) {
+            <div class="p-5 space-y-6">
+              <div>
+                <p class="flex justify-between text-sm"><span class="font-medium">Demandes</span><span class="tabular-nums text-encre-soft">{{ s.demandes }}</span></p>
+                <div class="mt-2 flex h-2 gap-0.5 overflow-hidden rounded-full bg-chaux" aria-hidden="true">
+                  @for (st of STATUTS_DEMANDE.slice(1); track st) {
+                    <div [class]="STATUTS[st!].dot" [style.width.%]="part(s.demandesParStatut[st!], s.demandes)"></div>
+                  }
+                </div>
+                <ul class="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
+                  @for (st of STATUTS_DEMANDE.slice(1); track st) {
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="size-2 rounded-full" [class]="STATUTS[st!].dot"></span>{{ STATUTS[st!].label }}</span><span class="tabular-nums font-medium">{{ s.demandesParStatut[st!] }}</span></li>
+                  }
+                </ul>
+              </div>
+              <div class="border-t border-encre/[0.07] pt-5">
+                <p class="flex justify-between text-sm"><span class="font-medium">Artisans</span><span class="tabular-nums text-encre-soft">{{ s.artisans }}</span></p>
+                <ul class="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[13px]">
+                  @for (st of STATUTS_VALIDATION.slice(0, 4); track st) {
+                    <li class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="size-2 rounded-full" [class]="VALIDATION[st!].dot"></span>{{ VALIDATION[st!].label }}</span><span class="tabular-nums font-medium">{{ s.artisansParStatut[st!] }}</span></li>
+                  }
+                </ul>
+              </div>
+              <div class="border-t border-encre/[0.07] pt-5 flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium">Avis clients</p>
+                  <p class="text-[13px] text-encre-soft">{{ s.avis | number }} avis publiés</p>
+                </div>
+                <p class="font-display text-2xl tabular-nums">{{ s.noteMoyenne | number: '1.1-1' }}<span class="text-sm text-encre-soft"> / 5</span></p>
+              </div>
+            </div>
+          } @else {
+            <div class="p-5"><div class="skeleton h-40 !rounded-md"></div></div>
+          }
+        </section>
+      </div>
+    }
+
+    <!-- ================= Validation des artisans ================= -->
+    @case ('validations') {
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl">Artisans</h1>
+          <p class="mt-1 text-encre-soft">Vérifiez chaque inscription avant sa mise en ligne. Un artisan non validé ne peut pas se connecter.</p>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="flex flex-wrap self-start gap-1 rounded-md border border-encre/10 bg-white p-1" role="group" aria-label="Filtrer par statut">
+          @for (st of STATUTS_VALIDATION; track $index) {
+            <button type="button" (click)="filtrer(statutArtisan, pageArtisan, st)" [attr.aria-pressed]="statutArtisan() === st"
+                    class="rounded px-2.5 py-1 text-[13px] font-medium transition-colors"
+                    [class]="statutArtisan() === st ? 'bg-menthe-deep text-white' : 'text-encre-soft hover:text-encre hover:bg-chaux'">
+              {{ st ? VALIDATION[st].label : 'Tous' }}
+              @if (s && st) { <span class="ml-1 tabular-nums opacity-60">{{ s.artisansParStatut[st] }}</span> }
+            </button>
+          }
+        </div>
+        <label class="relative">
+          <span class="sr-only">Rechercher un artisan</span>
+          <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+          <input type="search" class="dash-input w-64 !pl-8" placeholder="Nom, e-mail, métier, ville…" [ngModel]="qArtisan()" (ngModelChange)="filtrer(qArtisan, pageArtisan, $event)" />
+        </label>
+      </div>
+
+      @let ap = artisans();
+      @if (ap === null) {
+        <div class="mt-4 grid md:grid-cols-2 gap-4">@for (i of [1, 2]; track i) { <div class="skeleton h-48 !rounded-lg"></div> }</div>
+      } @else {
+        <ul class="mt-4 grid md:grid-cols-2 gap-4">
+          @for (a of ap.content; track a.id) {
+            <li class="dash-panel flex flex-col p-5">
+              <div class="flex items-start gap-3">
+                <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="44" />
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold">{{ a.prenom }} {{ a.nom }}</p>
+                  <p class="truncate text-[13px] text-encre-soft">{{ a.email }}</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold" [class]="VALIDATION[a.statutValidation].cls">
+                  <span class="size-1.5 rounded-full" [class]="VALIDATION[a.statutValidation].dot"></span>{{ VALIDATION[a.statutValidation].label }}
+                </span>
+              </div>
+              <dl class="mt-4 grid grid-cols-3 gap-3 rounded-md bg-chaux px-3 py-2.5 text-[13px]">
+                <div><dt class="text-encre-soft">Métier</dt><dd class="font-medium">{{ a.metier }}</dd></div>
+                <div><dt class="text-encre-soft">Ville</dt><dd class="font-medium">{{ a.ville || '—' }}</dd></div>
+                <div><dt class="text-encre-soft">Tarif</dt><dd class="font-medium tabular-nums">{{ a.tarifHoraire != null ? a.tarifHoraire + ' MAD/h' : '—' }}</dd></div>
+              </dl>
+              <p class="mt-3 flex-1 text-sm leading-relaxed" [class.text-encre-soft]="!a.description">{{ a.description || 'Pas de présentation fournie.' }}</p>
+              <p class="mt-3 text-xs text-encre-soft">
+                Inscrit le {{ a.createdAt | date: "d MMMM y 'à' HH:mm" }}
+                @if (a.valideLe && a.statutValidation === 'VALIDE') { · validé le {{ a.valideLe | date: 'd MMM y' }} }
+                · {{ a.nbAnnonces }} annonce(s)
+              </p>
+              @if (a.motifRefus) {
+                <p class="mt-2 rounded-md bg-argile-50 px-3 py-2 text-[13px]"><span class="font-medium">Motif :</span> {{ a.motifRefus }}</p>
+              }
+
+              @if (motifPour()?.id === a.id) {
+                <form class="enter-rise mt-4 space-y-2 rounded-md border border-encre/10 bg-chaux p-3" (ngSubmit)="confirmerMotif(a)">
+                  <label class="block text-sm font-medium" [for]="'motif-' + a.id">
+                    {{ motifPour()!.statut === 'REFUSE' ? 'Motif du refus' : 'Motif de la suspension' }}
+                    <span class="font-normal text-encre-soft">(communiqué à l'artisan)</span>
+                  </label>
+                  <textarea [id]="'motif-' + a.id" name="motif" rows="2" [(ngModel)]="motif" class="dash-input h-auto w-full py-2"
+                            placeholder="Ex. pièce d'identité illisible, métier non vérifiable…"></textarea>
+                  <div class="flex gap-1.5">
+                    <button type="submit" class="dash-btn !border-[#a3321c] !bg-[#a3321c] !text-white" [disabled]="busyId() === a.id">
+                      {{ motifPour()!.statut === 'REFUSE' ? 'Refuser l\'inscription' : 'Suspendre le compte' }}
+                    </button>
+                    <button type="button" class="dash-btn dash-btn-danger !text-encre-soft" (click)="motifPour.set(null)">Annuler</button>
+                  </div>
+                </form>
+              } @else {
+                <div class="mt-4 flex flex-wrap gap-1.5 border-t border-encre/[0.07] pt-4">
+                  @switch (a.statutValidation) {
+                    @case ('EN_ATTENTE') {
+                      <button type="button" class="dash-btn dash-btn-primary" [disabled]="busyId() === a.id" (click)="valider(a)"><app-icon name="check" [size]="15" />Valider</button>
+                      <button type="button" class="dash-btn dash-btn-danger" (click)="demanderMotif(a, 'REFUSE')">Refuser</button>
+                    }
+                    @case ('VALIDE') {
+                      <a [routerLink]="['/artisans', a.id]" class="dash-btn"><app-icon name="external" [size]="14" />Profil public</a>
+                      <button type="button" class="dash-btn dash-btn-danger" (click)="demanderMotif(a, 'SUSPENDU')">Suspendre</button>
+                    }
+                    @default {
+                      <button type="button" class="dash-btn dash-btn-primary" [disabled]="busyId() === a.id" (click)="valider(a)">
+                        {{ a.statutValidation === 'SUSPENDU' ? 'Réactiver' : 'Valider finalement' }}
+                      </button>
+                    }
+                  }
+                </div>
+              }
+            </li>
+          } @empty {
+            <li class="md:col-span-2 dash-panel px-5 py-12 text-center">
+              <app-icon name="check" [size]="24" class="text-menthe" />
+              <p class="mt-2 text-sm font-medium">{{ statutArtisan() === 'EN_ATTENTE' ? 'Aucune inscription à valider' : 'Aucun artisan ne correspond' }}</p>
+            </li>
+          }
+        </ul>
+        <app-pager [page]="ap.number" [totalPages]="ap.totalPages" [totalElements]="ap.totalElements" [pageSize]="ap.size"
+                   label="artisans" (change)="changerPage(pageArtisan, $event)" />
+      }
+    }
+
+    <!-- ================= Demandes d'offre ================= -->
+    @case ('offres') {
+      <h1 class="text-3xl">Demandes d'offre</h1>
+      <p class="mt-1 text-encre-soft max-w-[72ch]">
+        Les artisans choisissent une offre depuis leur espace. Contactez-les pour le paiement, puis décidez :
+        « Paiement reçu » active l'offre, « Refuser » leur envoie votre réponse, « Suspendre » bloque le compte.
+      </p>
+      <div class="mt-5 flex flex-wrap gap-1 rounded-md border border-encre/10 bg-white p-1 w-fit" role="group" aria-label="Filtrer par statut">
+        @for (st of STATUTS_OFFRE; track $index) {
+          <button type="button" (click)="filtrer(statutOffre, pageOffre, st)" [attr.aria-pressed]="statutOffre() === st"
+                  class="rounded px-2.5 py-1 text-[13px] font-medium transition-colors"
+                  [class]="statutOffre() === st ? 'bg-menthe-deep text-white' : 'text-encre-soft hover:text-encre hover:bg-chaux'">
+            {{ st ? LIBELLE_OFFRE[st] : 'Toutes' }}
+            @if (st === 'EN_ATTENTE' && s?.demandesOffreEnAttente) { <span class="ml-1 tabular-nums opacity-70">{{ s!.demandesOffreEnAttente }}</span> }
+          </button>
+        }
+      </div>
+
+      @let op = demandesOffre();
+      @if (op === null) {
+        <div class="mt-4 space-y-3">@for (i of [1, 2]; track i) { <div class="skeleton h-40 !rounded-lg"></div> }</div>
+      } @else {
+        <ul class="mt-4 space-y-4">
+          @for (d of op.content; track d.id) {
+            <li class="dash-panel p-5">
+              <div class="flex flex-wrap items-start gap-4">
+                <app-avatar [name]="d.artisanNomComplet" [size]="44" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="font-semibold">{{ d.artisanNomComplet }}</p>
+                    <span class="rounded-full px-2 py-0.5 text-xs font-semibold" [class]="STATUT_OFFRE[d.statut].cls">{{ LIBELLE_OFFRE[d.statut] }}</span>
+                    @if (d.artisanStatut === 'SUSPENDU') { <span class="rounded-full bg-encre px-2 py-0.5 text-xs font-semibold text-white">Compte suspendu</span> }
+                  </div>
+                  <p class="text-[13px] text-encre-soft">
+                    {{ d.artisanMetier }}@if (d.artisanVille) {, {{ d.artisanVille }}} ·
+                    <span class="rounded px-1.5 py-0.5 text-[11px] font-semibold" [class]="PRO[d.statutPro].cls">{{ PRO[d.statutPro].label }}</span>
+                    @if (d.proJusquAu) { {{ d.statutPro === 'EXPIRE' ? 'depuis le' : "jusqu'au" }} {{ d.proJusquAu | date: 'd MMM y' }} }
+                  </p>
+                </div>
+                <p class="text-right text-xs text-encre-soft">Reçue le {{ d.createdAt | date: "d MMM 'à' HH:mm" }}</p>
+              </div>
+
+              <div class="mt-4 grid md:grid-cols-[1fr_1fr] gap-4">
+                <div class="rounded-md bg-chaux px-4 py-3">
+                  <p class="text-sm font-semibold">{{ d.formule.libelle }} · {{ d.formule.montant | number: '1.0-0' }} MAD</p>
+                  @if (d.annonceTitre) { <p class="text-[13px] text-menthe-deep">Annonce : {{ d.annonceTitre }}</p> }
+                  <ul class="mt-2 space-y-0.5 text-[13px] text-encre-soft">
+                    @for (a of d.formule.avantages; track a) { <li>✓ {{ a }}</li> }
+                  </ul>
+                </div>
+                <div class="space-y-2 text-sm">
+                  <p><span class="text-encre-soft">Paiement souhaité :</span> <span class="font-medium">{{ d.moyenSouhaite }}</span></p>
+                  <p>
+                    <span class="text-encre-soft">Téléphone :</span>
+                    @if (d.artisanTelephone) { <a [href]="'tel:' + d.artisanTelephone" class="font-medium tabular-nums hover:underline">{{ telephoneLisible(d.artisanTelephone) }}</a> }
+                    @else { <span>non renseigné</span> }
+                  </p>
+                  @if (d.message) { <blockquote class="border-l-2 border-citron pl-3 text-[13px] italic">« {{ d.message }} »</blockquote> }
+                  @if (d.reponseAdmin) { <p class="text-[13px]"><span class="text-encre-soft">Réponse envoyée :</span> {{ d.reponseAdmin }}</p> }
+                  @if (d.traiteePar) { <p class="text-xs text-encre-soft">Traitée par {{ d.traiteePar }} le {{ d.traiteeLe | date: 'd MMM y' }}</p> }
+                </div>
+              </div>
+
+              @if (d.statut === 'EN_ATTENTE' || d.statut === 'CONTACTEE') {
+                @if (decisionPour()?.id === d.id) {
+                  @let dec = decisionPour()!.decision;
+                  <form class="enter-rise mt-4 space-y-2 rounded-md border border-encre/10 bg-chaux p-4" (ngSubmit)="confirmerDecision(d)">
+                    @if (dec === 'PAYEE') {
+                      <p class="text-sm font-medium">Paiement reçu : {{ d.formule.montant | number: '1.0-0' }} MAD, {{ d.formule.dureeJours }} jours</p>
+                      <div class="grid sm:grid-cols-2 gap-2">
+                        <label class="text-[13px]"><span class="text-encre-soft">Moyen</span>
+                          <select class="dash-input mt-1 w-full" name="moyen" [(ngModel)]="decision.moyen">
+                            @for (m of MOYENS; track m.value) { <option [value]="m.value">{{ m.label }}</option> }
+                          </select></label>
+                        <label class="text-[13px]"><span class="text-encre-soft">Référence</span>
+                          <input class="dash-input mt-1 w-full" name="ref" [(ngModel)]="decision.reference" placeholder="Ex. CP 482 913" /></label>
+                      </div>
+                    } @else {
+                      <label class="block text-sm font-medium" [for]="'rep-' + d.id">
+                        {{ dec === 'CONTACTEE' ? "Message à l'artisan (facultatif)" : dec === 'REFUSEE' ? "Réponse à l'artisan" : 'Motif de la suspension (montré à l\'artisan)' }}
+                      </label>
+                      <textarea [id]="'rep-' + d.id" name="reponse" rows="2" class="dash-input h-auto w-full py-2" [(ngModel)]="decision.reponse"
+                                [placeholder]="dec === 'CONTACTEE' ? 'Ex. nous vous appelons demain matin pour le code CashPlus.' : dec === 'REFUSEE' ? 'Ex. paiement non reçu après 7 jours.' : 'Ex. coordonnées fausses, profil non vérifiable.'"></textarea>
+                    }
+                    <div class="flex flex-wrap gap-1.5">
+                      <button type="submit" class="dash-btn" [disabled]="busyId() === d.id"
+                              [class]="dec === 'SUSPENDRE_COMPTE' || dec === 'REFUSEE' ? '!border-[#a3321c] !bg-[#a3321c] !text-white' : 'dash-btn-primary'">
+                        {{ dec === 'PAYEE' ? 'Enregistrer le paiement et activer' : dec === 'CONTACTEE' ? 'Marquer contactée' : dec === 'REFUSEE' ? 'Refuser la demande' : 'Suspendre le compte' }}
+                      </button>
+                      <button type="button" class="dash-btn dash-btn-danger !text-encre-soft" (click)="decisionPour.set(null)">Annuler</button>
+                    </div>
+                  </form>
+                } @else {
+                  <div class="mt-4 flex flex-wrap gap-1.5 border-t border-encre/[0.07] pt-4">
+                    <button type="button" class="dash-btn dash-btn-primary" (click)="preparerDecision(d, 'PAYEE')"><app-icon name="check" [size]="15" />Paiement reçu</button>
+                    @if (d.artisanTelephone) {
+                      <a [href]="whatsappDemande(d)" target="_blank" rel="noopener" class="dash-btn">Contacter sur WhatsApp</a>
+                    }
+                    @if (d.statut === 'EN_ATTENTE') {
+                      <button type="button" class="dash-btn" (click)="preparerDecision(d, 'CONTACTEE')">Marquer contactée</button>
+                    }
+                    <button type="button" class="dash-btn dash-btn-danger" (click)="preparerDecision(d, 'REFUSEE')">Refuser</button>
+                    <button type="button" class="dash-btn dash-btn-danger" (click)="preparerDecision(d, 'SUSPENDRE_COMPTE')">Suspendre le compte</button>
+                  </div>
+                }
+              }
+            </li>
+          } @empty {
+            <li class="dash-panel px-5 py-12 text-center">
+              <app-icon name="check" [size]="24" class="text-menthe" />
+              <p class="mt-2 text-sm font-medium">{{ statutOffre() === 'EN_ATTENTE' ? 'Aucune demande à traiter' : 'Aucune demande avec ce statut' }}</p>
+            </li>
+          }
+        </ul>
+        <app-pager [page]="op.number" [totalPages]="op.totalPages" [totalElements]="op.totalElements" [pageSize]="op.size"
+                   label="demandes" (change)="changerPage(pageOffre, $event)" />
+      }
+    }
+
+    <!-- ================= Comptes & paiements ================= -->
+    @case ('comptes') {
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl">Comptes & paiements</h1>
+          <p class="mt-1 text-encre-soft max-w-[70ch]">
+            Pas de paiement en ligne : contactez l'artisan (WhatsApp, appel), encaissez par CashPlus, Wafacash, virement ou en espèces,
+            puis enregistrez le paiement ici. L'offre Pro ou la mise en avant est prolongée et l'artisan est notifié.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <app-stat-tile label="Encaissé ce mois" icon="wallet" [value]="s ? (s.revenusMois | number: '1.0-0') + ' MAD' : '–'" [hint]="s ? (s.revenusTotal | number: '1.0-0') + ' MAD au total' : ''" />
+        <app-stat-tile label="Pro payés" icon="check" [value]="s?.prosPayants ?? '–'" [hint]="s ? s.prosOfferts + ' en période offerte' : ''" />
+        <app-stat-tile label="À relancer" icon="clock" [value]="s?.aRelancer ?? '–'" [tone]="s?.aRelancer ? 'text-[#9a6a00]' : 'text-encre'" hint="Échus ou échéance sous 15 jours" />
+        <app-stat-tile label="Annonces mises en avant" icon="star" [value]="s?.annoncesMisesEnAvant ?? '–'" hint="En ce moment" />
+      </div>
+
+      <div class="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="flex flex-wrap self-start gap-1 rounded-md border border-encre/10 bg-white p-1" role="group" aria-label="Filtrer les comptes">
+          @for (f of FILTRES_COMPTE; track f.value) {
+            <button type="button" (click)="filtrer(filtreCompte, pageCompte, f.value)" [attr.aria-pressed]="filtreCompte() === f.value"
+                    class="rounded px-2.5 py-1 text-[13px] font-medium transition-colors"
+                    [class]="filtreCompte() === f.value ? 'bg-menthe-deep text-white' : 'text-encre-soft hover:text-encre hover:bg-chaux'">{{ f.label }}</button>
+          }
+        </div>
+        <label class="relative">
+          <span class="sr-only">Rechercher un compte</span>
+          <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+          <input type="search" class="dash-input w-64 !pl-8" placeholder="Nom, téléphone, métier…" [ngModel]="qCompte()" (ngModelChange)="filtrer(qCompte, pageCompte, $event)" />
+        </label>
+      </div>
+
+      @let cp = comptes();
+      <div class="dash-panel mt-4 overflow-hidden">
+        <div class="hidden lg:grid grid-cols-[1.6fr_1.2fr_1fr_0.9fr_auto] gap-4 px-5 py-2.5 border-b border-encre/10 bg-chaux/60 text-xs font-medium text-encre-soft">
+          <span>Artisan</span><span>Téléphone</span><span>Offre Pro</span><span class="text-right">Total payé</span><span class="w-44 text-right">Actions</span>
+        </div>
+        @if (cp === null) {
+          <div class="p-5 space-y-3">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-12 !rounded-md"></div> }</div>
+        } @else {
+          <ul class="divide-y divide-encre/[0.07]">
+            @for (c of cp.content; track c.id) {
+              @let ouvert = detail()?.compte?.id === c.id;
+              <li [class.bg-chaux]="ouvert">
+                <div class="grid lg:grid-cols-[1.6fr_1.2fr_1fr_0.9fr_auto] gap-x-4 gap-y-2 px-5 py-3 lg:items-center text-sm">
+                  <div class="flex min-w-0 items-center gap-3">
+                    <app-avatar [name]="c.prenom + ' ' + c.nom" [size]="34" />
+                    <div class="min-w-0">
+                      <p class="truncate font-semibold">{{ c.prenom }} {{ c.nom }}</p>
+                      <p class="truncate text-[13px] text-encre-soft">{{ c.metier }}@if (c.ville) {, {{ c.ville }}}</p>
+                    </div>
+                  </div>
+                  <div class="min-w-0">
+                    @if (c.telephone) {
+                      <a [href]="'tel:' + c.telephone" class="tabular-nums hover:underline">{{ telephoneLisible(c.telephone) }}</a>
+                    } @else { <span class="text-encre-soft">Non renseigné</span> }
+                    @if (c.noteAdmin) { <p class="truncate text-xs text-encre-soft" [title]="c.noteAdmin">📝 {{ c.noteAdmin }}</p> }
+                  </div>
+                  <div>
+                    <span class="rounded-full px-2 py-0.5 text-xs font-semibold" [class]="PRO[c.statutPro].cls">{{ PRO[c.statutPro].label }}</span>
+                    @if (c.proJusquAu) { <p class="mt-0.5 text-xs text-encre-soft">{{ c.statutPro === 'EXPIRE' ? 'depuis le' : "jusqu'au" }} {{ c.proJusquAu | date: 'd MMM y' }}</p> }
+                  </div>
+                  <p class="font-semibold tabular-nums lg:text-right">
+                    {{ c.totalPaye | number: '1.0-0' }} MAD
+                    @if (c.annoncesMisesEnAvant) { <span class="block text-xs font-normal text-[#7a5600]">{{ c.annoncesMisesEnAvant }} mise(s) en avant</span> }
+                  </p>
+                  <div class="flex flex-wrap gap-1.5 lg:w-44 lg:justify-end">
+                    @if (c.telephone) {
+                      <a [href]="relance(c)" target="_blank" rel="noopener" class="dash-btn !px-2" title="Relancer sur WhatsApp" aria-label="Relancer sur WhatsApp">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#1f9d55" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.6-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"/></svg>
+                      </a>
+                    }
+                    <button type="button" class="dash-btn" [class.dash-btn-primary]="!ouvert" (click)="ouvrirCompte(c)" [attr.aria-expanded]="ouvert">
+                      {{ ouvert ? 'Fermer' : 'Gérer' }}
+                    </button>
+                  </div>
+                </div>
+
+                @if (ouvert && detail(); as d) {
+                  <div class="enter-rise grid xl:grid-cols-[1.1fr_1fr] gap-5 border-t border-encre/10 px-5 py-5">
+                    <!-- Enregistrer un paiement -->
+                    <form class="rounded-md border border-encre/10 bg-white p-4 space-y-3" (ngSubmit)="enregistrerPaiement()">
+                      <p class="text-sm font-semibold">Enregistrer un paiement reçu</p>
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (f of FORMULES; track f.label) {
+                          <button type="button" (click)="choisirFormule(f)" class="rounded-full border px-2.5 py-1 text-xs font-medium"
+                                  [class]="paiement.objet === f.objet && paiement.dureeJours === f.jours && paiement.montant === f.montant ? 'border-menthe-deep bg-menthe-deep text-white' : 'border-encre/15 hover:border-encre/40'">
+                            {{ f.label }} · {{ f.montant }} MAD
+                          </button>
+                        }
+                      </div>
+                      <div class="grid sm:grid-cols-3 gap-2">
+                        <label class="text-[13px]"><span class="text-encre-soft">Objet</span>
+                          <select class="dash-input mt-1 w-full" name="objet" [(ngModel)]="paiement.objet">
+                            <option value="ABONNEMENT_PRO">Offre Pro</option><option value="MISE_EN_AVANT">Mise en avant</option>
+                          </select></label>
+                        <label class="text-[13px]"><span class="text-encre-soft">Montant (MAD)</span>
+                          <input type="number" min="0" class="dash-input mt-1 w-full" name="montant" [(ngModel)]="paiement.montant" /></label>
+                        <label class="text-[13px]"><span class="text-encre-soft">Durée (jours)</span>
+                          <input type="number" min="1" max="730" class="dash-input mt-1 w-full" name="duree" [(ngModel)]="paiement.dureeJours" /></label>
+                        <label class="text-[13px]"><span class="text-encre-soft">Moyen</span>
+                          <select class="dash-input mt-1 w-full" name="moyen" [(ngModel)]="paiement.moyen">
+                            @for (m of MOYENS; track m.value) { <option [value]="m.value">{{ m.label }}</option> }
+                          </select></label>
+                        <label class="text-[13px] sm:col-span-2"><span class="text-encre-soft">Référence (n° de transfert…)</span>
+                          <input class="dash-input mt-1 w-full" name="reference" [(ngModel)]="paiement.reference" placeholder="Ex. CP 482 913" /></label>
+                        @if (paiement.objet === 'MISE_EN_AVANT') {
+                          <label class="text-[13px] sm:col-span-3"><span class="text-encre-soft">Annonce à mettre en avant</span>
+                            <select class="dash-input mt-1 w-full" name="annonce" [(ngModel)]="paiement.annonceId">
+                              @for (an of d.annonces; track an.id) {
+                                <option [ngValue]="an.id">{{ an.titre }}{{ an.active ? '' : ' (masquée)' }}{{ enAvant(an.sponsoriseJusquAu) ? " — en avant jusqu'au " + (an.sponsoriseJusquAu | date: 'd MMM') : '' }}</option>
+                              } @empty { <option [ngValue]="null">Aucune annonce</option> }
+                            </select></label>
+                        }
+                      </div>
+                      <button type="submit" class="dash-btn dash-btn-primary" [disabled]="busyId() === d.compte.id || (paiement.objet === 'MISE_EN_AVANT' && !paiement.annonceId)">
+                        <app-icon name="check" [size]="15" />Enregistrer {{ paiement.montant }} MAD
+                      </button>
+                      <p class="text-xs text-encre-soft">
+                        {{ paiement.objet === 'ABONNEMENT_PRO' ? "Prolonge l'offre Pro de " : 'Met l’annonce en avant pendant ' }}{{ paiement.dureeJours }} jours
+                        à partir de l'échéance actuelle (ou d'aujourd'hui si elle est passée).
+                      </p>
+                    </form>
+
+                    <div class="space-y-4">
+                      <!-- Notes de suivi -->
+                      <div class="rounded-md border border-encre/10 bg-white p-4">
+                        <label class="text-sm font-semibold" [for]="'note-' + d.compte.id">Notes de suivi</label>
+                        <p class="text-xs text-encre-soft">Visibles par l'équipe uniquement.</p>
+                        <textarea [id]="'note-' + d.compte.id" rows="3" class="dash-input mt-2 h-auto w-full py-2" [(ngModel)]="noteDraft"
+                                  placeholder="Ex. appelé le 21/11, rappeler lundi, préfère CashPlus…"></textarea>
+                        <button type="button" class="dash-btn mt-2" (click)="sauverNote()">Enregistrer la note</button>
+                      </div>
+                      <!-- Historique -->
+                      <div class="rounded-md border border-encre/10 bg-white">
+                        <p class="border-b border-encre/[0.07] px-4 py-2.5 text-sm font-semibold">Historique des paiements</p>
+                        <ul class="max-h-64 divide-y divide-encre/[0.07] overflow-y-auto">
+                          @for (p of d.paiements; track p.id) {
+                            <li class="flex items-start justify-between gap-3 px-4 py-2.5 text-[13px]">
+                              <span>
+                                <span class="font-medium">{{ p.objet === 'ABONNEMENT_PRO' ? 'Offre Pro' : 'Mise en avant' }} · {{ p.dureeJours }} j</span>
+                                @if (p.annonceTitre) { <span class="block text-encre-soft truncate">{{ p.annonceTitre }}</span> }
+                                <span class="block text-xs text-encre-soft">{{ p.createdAt | date: 'd MMM y' }} · {{ p.moyen }}{{ p.reference ? ' · ' + p.reference : '' }}{{ p.enregistrePar ? ' · par ' + p.enregistrePar : '' }}</span>
+                              </span>
+                              <span class="whitespace-nowrap font-semibold tabular-nums">{{ p.montant | number: '1.0-0' }} MAD</span>
+                            </li>
+                          } @empty {
+                            <li class="px-4 py-5 text-center text-[13px] text-encre-soft">Aucun paiement enregistré.</li>
+                          }
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center text-sm text-encre-soft">
+                {{ filtreCompte() === 'A_RELANCER' ? 'Aucun compte à relancer : tout est à jour.' : 'Aucun compte ne correspond.' }}
+              </li>
+            }
+          </ul>
+          <app-pager compact [page]="cp.number" [totalPages]="cp.totalPages" [totalElements]="cp.totalElements" [pageSize]="cp.size"
+                     label="comptes" (change)="pageCompte.set($event)" />
+        }
+      </div>
+    }
+
+    <!-- ================= Utilisateurs ================= -->
+    @case ('utilisateurs') {
+      <h1 class="text-3xl">Utilisateurs</h1>
+      <div class="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="flex flex-wrap self-start gap-1 rounded-md border border-encre/10 bg-white p-1" role="group" aria-label="Filtrer par rôle">
+          @for (r of ROLES; track r.label) {
+            <button type="button" (click)="filtrer(role, pageUser, r.value)" [attr.aria-pressed]="role() === r.value"
+                    class="rounded px-2.5 py-1 text-[13px] font-medium transition-colors"
+                    [class]="role() === r.value ? 'bg-menthe-deep text-white' : 'text-encre-soft hover:text-encre hover:bg-chaux'">{{ r.label }}</button>
+          }
+        </div>
+        <label class="relative">
+          <span class="sr-only">Rechercher un utilisateur</span>
+          <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+          <input type="search" class="dash-input w-64 !pl-8" placeholder="Nom ou e-mail…" [ngModel]="qUser()" (ngModelChange)="filtrer(qUser, pageUser, $event)" />
+        </label>
+      </div>
+      @let up = users();
+      <div class="dash-panel mt-4 overflow-hidden">
+        <div class="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-4 px-5 py-2.5 border-b border-encre/10 bg-chaux/60 text-xs font-medium text-encre-soft">
+          <span>Nom</span><span>E-mail</span><span>Rôle</span><span>Statut</span><span>Inscrit le</span>
+        </div>
+        @if (up === null) {
+          <div class="p-5 space-y-3">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-10 !rounded-md"></div> }</div>
+        } @else {
+          <ul class="divide-y divide-encre/[0.07]">
+            @for (u of up.content; track u.id) {
+              <li class="grid md:grid-cols-[2fr_2fr_1fr_1fr_1fr] gap-x-4 gap-y-1 px-5 py-3 md:items-center text-sm">
+                <span class="flex items-center gap-3 min-w-0"><app-avatar [name]="u.prenom + ' ' + u.nom" [size]="32" /><span class="truncate font-medium">{{ u.prenom }} {{ u.nom }}</span></span>
+                <span class="truncate text-encre-soft">{{ u.email }}</span>
+                <span><span class="rounded-full px-2 py-0.5 text-xs font-medium"
+                            [class]="u.role === 'ADMIN' ? 'bg-encre text-white' : u.role === 'ARTISAN' ? 'bg-menthe-50 text-menthe-deep' : 'bg-chaux text-encre'">{{ u.role === 'ADMIN' ? 'Admin' : u.role === 'ARTISAN' ? 'Artisan' : 'Client' }}</span></span>
+                <span>
+                  @if (u.statutValidation; as st) {
+                    <span class="inline-flex items-center gap-1.5 text-xs font-medium"><span class="size-1.5 rounded-full" [class]="VALIDATION[st].dot"></span>{{ VALIDATION[st].label }}</span>
+                  } @else { <span class="text-xs text-encre-soft">Actif</span> }
+                </span>
+                <span class="text-encre-soft tabular-nums">{{ u.createdAt | date: 'd MMM y' }}</span>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center text-sm text-encre-soft">Aucun utilisateur ne correspond.</li>
+            }
+          </ul>
+          <app-pager compact [page]="up.number" [totalPages]="up.totalPages" [totalElements]="up.totalElements" [pageSize]="up.size"
+                     label="comptes" (change)="pageUser.set($event)" />
+        }
+      </div>
+    }
+
+    <!-- ================= Annonces ================= -->
+    @case ('annonces') {
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl">Annonces</h1>
+          <p class="mt-1 text-encre-soft">Masquez une annonce non conforme ou supprimez-la définitivement.</p>
+        </div>
+        <label class="relative self-start sm:self-auto">
+          <span class="sr-only">Rechercher une annonce</span>
+          <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+          <input type="search" class="dash-input w-64 !pl-8" placeholder="Titre, métier, ville, artisan…" [ngModel]="qAnnonce()" (ngModelChange)="filtrer(qAnnonce, pageAnnonce, $event)" />
+        </label>
+      </div>
+      @let anp = annonces();
+      <div class="dash-panel mt-5 overflow-hidden">
+        @if (anp === null) {
+          <div class="p-5 space-y-3">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-14 !rounded-md"></div> }</div>
+        } @else {
+          <ul class="divide-y divide-encre/[0.07]">
+            @for (a of anp.content; track a.id) {
+              <li class="flex flex-wrap items-center gap-4 px-5 py-3">
+                <img [src]="mediaUrl(a.images[0]?.url)" alt="" class="w-16 aspect-[4/3] shrink-0 rounded object-cover bg-menthe-50" [class.grayscale]="!a.active" />
+                <div class="min-w-0 flex-1">
+                  <a [routerLink]="['/annonces', a.id]" class="block truncate text-sm font-semibold hover:underline">{{ a.titre }}</a>
+                  <p class="truncate text-[13px] text-encre-soft">{{ a.artisanNomComplet }} · {{ a.metier }}@if (a.ville) {, {{ a.ville }}}</p>
+                </div>
+                <span class="hidden sm:block text-sm tabular-nums whitespace-nowrap">{{ a | price }}</span>
+                <app-stars class="hidden md:block whitespace-nowrap" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="12" />
+                <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium"
+                      [class]="a.active ? 'bg-menthe-50 text-menthe-deep' : 'bg-encre/[0.07] text-encre-soft'">
+                  <span class="size-1.5 rounded-full" [class]="a.active ? 'bg-menthe' : 'bg-encre/40'"></span>{{ a.active ? 'En ligne' : 'Masquée' }}
+                </span>
+                <div class="flex gap-1.5">
+                  <button type="button" class="dash-btn" [disabled]="busyId() === a.id" (click)="basculerAnnonce(a)">
+                    <app-icon [name]="a.active ? 'eyeOff' : 'eye'" [size]="14" />{{ a.active ? 'Masquer' : 'Remettre' }}
+                  </button>
+                  <button type="button" class="dash-btn dash-btn-danger !px-2" [disabled]="busyId() === a.id" (click)="supprimerAnnonce(a)" title="Supprimer" aria-label="Supprimer l'annonce">
+                    <app-icon name="trash" [size]="15" />
+                  </button>
+                </div>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center text-sm text-encre-soft">Aucune annonce ne correspond.</li>
+            }
+          </ul>
+          <app-pager compact [page]="anp.number" [totalPages]="anp.totalPages" [totalElements]="anp.totalElements" [pageSize]="anp.size"
+                     label="annonces" (change)="pageAnnonce.set($event)" />
+        }
+      </div>
+    }
+
+    <!-- ================= Avis ================= -->
+    @case ('avis') {
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl">Avis</h1>
+          <p class="mt-1 text-encre-soft">Retirez les avis injurieux ou hors sujet. La note de l'annonce est recalculée.</p>
+        </div>
+      </div>
+      <div class="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div class="flex flex-wrap self-start gap-1 rounded-md border border-encre/10 bg-white p-1" role="group" aria-label="Filtrer par note">
+          @for (n of [null, 3, 2, 1]; track $index) {
+            <button type="button" (click)="filtrer(noteMax, pageAvis, n)" [attr.aria-pressed]="noteMax() === n"
+                    class="rounded px-2.5 py-1 text-[13px] font-medium transition-colors"
+                    [class]="noteMax() === n ? 'bg-menthe-deep text-white' : 'text-encre-soft hover:text-encre hover:bg-chaux'">
+              {{ n === null ? 'Toutes les notes' : n === 1 ? '1 étoile' : n + ' étoiles ou moins' }}
+            </button>
+          }
+        </div>
+        <label class="relative">
+          <span class="sr-only">Rechercher un avis</span>
+          <app-icon name="search" [size]="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-encre-soft" />
+          <input type="search" class="dash-input w-64 !pl-8" placeholder="Mot du commentaire, client…" [ngModel]="qAvis()" (ngModelChange)="filtrer(qAvis, pageAvis, $event)" />
+        </label>
+      </div>
+      @let avp = avis();
+      <div class="dash-panel mt-4 overflow-hidden">
+        @if (avp === null) {
+          <div class="p-5 space-y-3">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-16 !rounded-md"></div> }</div>
+        } @else {
+          <ul class="divide-y divide-encre/[0.07]">
+            @for (r of avp.content; track r.id) {
+              <li class="flex items-start gap-4 px-5 py-4">
+                <app-avatar [name]="r.clientNomComplet" [size]="36" />
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span class="text-sm font-semibold">{{ r.clientNomComplet }}</span>
+                    <app-stars [value]="r.note" [showValue]="false" [size]="13" />
+                    <span class="text-xs text-encre-soft">{{ r.createdAt | date: 'd MMM y' }}</span>
+                  </div>
+                  <p class="mt-1 text-sm" [class.italic]="!r.commentaire" [class.text-encre-soft]="!r.commentaire">{{ r.commentaire || 'Sans commentaire' }}</p>
+                  <a [routerLink]="['/annonces', r.annonceId]" class="mt-1 inline-block text-[13px] text-menthe-deep hover:underline">{{ r.annonceTitre }}</a>
+                </div>
+                <button type="button" class="dash-btn dash-btn-danger" [disabled]="busyId() === r.id" (click)="supprimerAvis(r)"><app-icon name="trash" [size]="14" />Retirer</button>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center text-sm text-encre-soft">Aucun avis ne correspond.</li>
+            }
+          </ul>
+          <app-pager compact [page]="avp.number" [totalPages]="avp.totalPages" [totalElements]="avp.totalElements" [pageSize]="avp.size"
+                     label="avis" (change)="pageAvis.set($event)" />
+        }
+      </div>
+    }
+
+    <!-- ================= Demandes ================= -->
+    @case ('demandes') {
+      <h1 class="text-3xl">Demandes d'intervention</h1>
+      <div class="mt-5 flex flex-wrap self-start gap-1 rounded-md border border-encre/10 bg-white p-1 w-fit" role="group" aria-label="Filtrer par statut">
+        @for (st of STATUTS_DEMANDE; track $index) {
+          <button type="button" (click)="filtrer(statutDemande, pageDemande, st)" [attr.aria-pressed]="statutDemande() === st"
+                  class="rounded px-2.5 py-1 text-[13px] font-medium transition-colors"
+                  [class]="statutDemande() === st ? 'bg-menthe-deep text-white' : 'text-encre-soft hover:text-encre hover:bg-chaux'">
+            {{ st ? STATUTS[st].label : 'Toutes' }}
+            @if (s) { <span class="ml-1 tabular-nums opacity-60">{{ st ? s.demandesParStatut[st] : s.demandes }}</span> }
+          </button>
+        }
+      </div>
+      @let dp = demandes();
+      <div class="dash-panel mt-4 overflow-hidden">
+        <div class="hidden md:grid grid-cols-[1.3fr_1.3fr_2fr_1fr_0.8fr] gap-4 px-5 py-2.5 border-b border-encre/10 bg-chaux/60 text-xs font-medium text-encre-soft">
+          <span>Client</span><span>Artisan</span><span>Demande</span><span>Intervention</span><span class="text-right">Montant</span>
+        </div>
+        @if (dp === null) {
+          <div class="p-5 space-y-3">@for (i of [1, 2, 3]; track i) { <div class="skeleton h-10 !rounded-md"></div> }</div>
+        } @else {
+          <ul class="divide-y divide-encre/[0.07]">
+            @for (d of dp.content; track d.id) {
+              <li class="grid md:grid-cols-[1.3fr_1.3fr_2fr_1fr_0.8fr] gap-x-4 gap-y-1 px-5 py-3 md:items-center text-sm">
+                <span class="truncate font-medium">{{ d.clientNomComplet }}</span>
+                <a [routerLink]="['/artisans', d.artisanId]" class="truncate hover:underline">{{ d.artisanNomComplet }}</a>
+                <span class="min-w-0">
+                  <app-statut-badge [statut]="d.statut" />
+                  <span class="mt-0.5 block truncate text-[13px] text-encre-soft">{{ d.annonceTitre ?? d.description }}</span>
+                </span>
+                <span class="text-encre-soft tabular-nums">{{ d.dateIntervention | date: 'd MMM y, HH:mm' }}</span>
+                <span class="md:text-right font-semibold tabular-nums">{{ d.prixFinal != null ? (d.prixFinal | price) : d.prixConvenu != null ? (d.prixConvenu | price) : '—' }}</span>
+              </li>
+            } @empty {
+              <li class="px-5 py-10 text-center text-sm text-encre-soft">Aucune demande avec ce statut.</li>
+            }
+          </ul>
+          <app-pager compact [page]="dp.number" [totalPages]="dp.totalPages" [totalElements]="dp.totalElements" [pageSize]="dp.size"
+                     label="demandes" (change)="pageDemande.set($event)" />
+        }
+      </div>
+    }
+  }
+</app-dashboard-shell>

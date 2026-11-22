@@ -1,46 +1,32 @@
-<section class="bg-menthe-50 py-20 lg:py-28 rounded-t-[48px] lg:rounded-t-[80px]">
+<section class="bg-chaux py-20 lg:py-28">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="max-w-2xl">
-      <h2 class="text-5xl sm:text-6xl">Il y a un pro pour ça.</h2>
-      <p class="mt-5 text-lg text-encre-soft leading-relaxed">
-        Six métiers, plus de 1 800 artisans vérifiés : identité, assurance et chantiers passés
-        contrôlés avant leur première mission.
-      </p>
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+      <div class="max-w-2xl">
+        <h2 class="text-4xl sm:text-5xl">Six métiers du bâtiment, un seul endroit</h2>
+        <p class="mt-4 text-lg text-encre-soft leading-relaxed">
+          Chaque artisan est vérifié : identité, assurance et chantiers passés, avant sa première mission.
+        </p>
+      </div>
+      <a routerLink="/services" class="btn btn-white self-start lg:self-auto">Voir tous les métiers</a>
     </div>
 
-    <ul class="mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16">
-      @for (service of services; track service.key; let i = $index) {
-        <li [class.lg:translate-y-14]="i % 3 === 1">
+    <ul class="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+      @for (service of services; track service.key) {
+        <li>
           <a [routerLink]="['/services', service.key]" class="group block">
-            <div class="relative">
-              <div
-                class="aspect-[5/4] bg-cover bg-center border-2 border-encre"
-                [class]="['blob-a', 'blob-b', 'blob-c'][i % 3]"
-                [style.background-image]="'url(' + service.image + ')'"
-              ></div>
-              <app-sticker
-                [name]="service.sticker"
-                [tilt]="i % 2 ? 9 : -9"
-                class="absolute -top-5 w-[4.5rem] h-[4.5rem]"
-                [class]="i % 2 ? '-right-2' : '-left-3'"
-              />
+            <div class="arch aspect-[4/3] overflow-hidden bg-menthe-50">
+              <div class="h-full w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-[1.04]"
+                   [style.background-image]="'url(' + service.image + ')'"></div>
             </div>
-            <div class="mt-5 flex items-start justify-between gap-4">
-              <div>
-                <h3 class="text-3xl group-hover:text-menthe-deep transition-colors">{{ service.title }}</h3>
-                <p class="mt-1.5 text-encre-soft leading-relaxed">{{ service.description }}</p>
-              </div>
-              <span class="shrink-0 mt-1 rounded-full bg-white border-2 border-encre/10 px-3 py-1 text-sm font-semibold tabular-nums">
-                {{ service.count }}&nbsp;pros
-              </span>
+            <div class="mt-5 flex items-baseline justify-between gap-4 border-b border-encre/10 pb-4">
+              <h3 class="text-2xl group-hover:text-menthe-deep transition-colors">{{ service.title }}</h3>
+              <span class="font-arabic text-lg text-menthe-deep" lang="ar">{{ service.ar }}</span>
             </div>
+            <p class="mt-3 text-encre-soft leading-relaxed">{{ service.description }}</p>
+            <p class="mt-2 text-sm font-medium tabular-nums">{{ service.count }} artisans disponibles</p>
           </a>
         </li>
       }
     </ul>
-
-    <div class="mt-24 lg:mt-32 text-center">
-      <a routerLink="/services" class="btn btn-white">Voir toutes les catégories</a>
-    </div>
   </div>
 </section>
