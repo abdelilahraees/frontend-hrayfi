@@ -6,10 +6,11 @@ import { mediaUrl } from '../../core/api.config';
 import { AuthService } from '../../core/auth/auth.service';
 import { salutation } from '../../core/dashboard-stats';
 import { errorMessage } from '../../core/http-error';
-import { AdminArtisan, AdminCompte, AdminCompteDetail, AdminStats, AdminUser, Annonce, Avis, Demande, FiltreCompte, MoyenPaiement, ObjetPaiement, Page, Role, StatutDemande, StatutPro, StatutValidation } from '../../core/models';
+import { AdminArtisan, AdminCompte, AdminCompteDetail, AdminStats, AdminUser, Annonce, Avis, Demande, DecisionOffre, DemandeOffre, FiltreCompte, MoyenPaiement, ObjetPaiement, StatutDemandeOffre, Page, Role, StatutDemande, StatutPro, StatutValidation } from '../../core/models';
 import { MonthTotal } from '../../core/dashboard-stats';
 import { lienWhatsApp, telephoneLisible } from '../../core/whatsapp';
 import { BarChartComponent } from '../../ui/bar-chart.component';
+import { STATUT_DEMANDE_OFFRE } from './mon-offre.component';
 import { AdminService } from '../../core/services/admin.service';
 import { AvatarComponent } from '../../ui/avatar.component';
 import { DashboardShellComponent, DashSection } from '../../ui/dashboard-shell.component';
@@ -20,8 +21,8 @@ import { StarsComponent } from '../../ui/stars.component';
 import { StatTileComponent } from '../../ui/stat-tile.component';
 import { STATUTS, StatutBadgeComponent } from '../../ui/statut-badge.component';
 
-type Onglet = Extract<DashSection, 'apercu' | 'validations' | 'comptes' | 'utilisateurs' | 'annonces' | 'avis' | 'demandes'>;
-const ONGLETS: Onglet[] = ['apercu', 'validations', 'comptes', 'utilisateurs', 'annonces', 'avis', 'demandes'];
+type Onglet = Extract<DashSection, 'apercu' | 'validations' | 'offres' | 'comptes' | 'utilisateurs' | 'annonces' | 'avis' | 'demandes'>;
+const ONGLETS: Onglet[] = ['apercu', 'validations', 'offres', 'comptes', 'utilisateurs', 'annonces', 'avis', 'demandes'];
 
 /** Libellés et couleurs des statuts de validation des artisans */
 export const VALIDATION: Record<StatutValidation, { label: string; cls: string; dot: string }> = {
@@ -56,7 +57,7 @@ export class AdminDashboardPage {
   readonly onglet = input<string>();
   protected readonly ongletActif = computed<Onglet>(() => (ONGLETS as string[]).includes(this.onglet() ?? '') ? (this.onglet() as Onglet) : 'apercu');
   protected readonly titre = computed(() => ({
-    apercu: "Vue d'ensemble", validations: 'Artisans à valider', comptes: 'Comptes & paiements', utilisateurs: 'Utilisateurs',
+    apercu: "Vue d'ensemble", validations: 'Artisans à valider', offres: "Demandes d'offre", comptes: 'Comptes & paiements', utilisateurs: 'Utilisateurs',
     annonces: 'Annonces', avis: 'Avis', demandes: 'Demandes',
   })[this.ongletActif()]);
 
@@ -86,6 +87,20 @@ export class AdminDashboardPage {
   /** Artisan dont on saisit le motif de refus / suspension */
   protected readonly motifPour = signal<{ id: number; statut: StatutValidation } | null>(null);
   protected motif = '';
+
+  // ---------- Demandes d'offre ----------
+  protected readonly STATUT_OFFRE = STATUT_DEMANDE_OFFRE;
+  /** Libellés côté équipe (ceux de l'artisan sont formulés pour lui) */
+  protected readonly LIBELLE_OFFRE: Record<StatutDemandeOffre, string> = {
+    EN_ATTENTE: 'En attente', CONTACTEE: 'Contactée', PAYEE: 'Payée', REFUSEE: 'Refusée', ANNULEE: 'Annulée',
+  };
+  protected readonly STATUTS_OFFRE: (StatutDemandeOffre | null)[] = ['EN_ATTENTE', 'CONTACTEE', 'PAYEE', 'REFUSEE', 'ANNULEE', null];
+  protected readonly statutOffre = signal<StatutDemandeOffre | null>('EN_ATTENTE');
+  protected readonly pageOffre = signal(0);
+  protected readonly demandesOffre = signal<Page<DemandeOffre> | null>(null);
+  /** Décision en cours de saisie sur une demande */
+  protected readonly decisionPour = signal<{ id: number; decision: DecisionOffre } | null>(null);
+  protected decision = { reponse: '', moyen: null as MoyenPaiement | null, reference: '' };
 
   // ---------- Comptes & paiements ----------
   protected readonly PRO = PRO;
@@ -152,7 +167,7 @@ export class AdminDashboardPage {
     let timer: ReturnType<typeof setTimeout> | undefined;
     effect(() => {
       const onglet = this.ongletActif();
-      const deps = [this.statutArtisan(), this.qArtisan(), this.pageArtisan(), this.filtreCompte(), this.qCompte(), this.pageCompte(),
+      const deps = [this.statutArtisan(), this.qArtisan(), this.pageArtisan(), this.statutOffre(), this.pageOffre(), this.filtreCompte(), this.qCompte(), this.pageCompte(),
         this.role(), this.qUser(), this.pageUser(),
         this.qAnnonce(), this.pageAnnonce(), this.noteMax(), this.qAvis(), this.pageAvis(), this.statutDemande(), this.pageDemande()];
       void deps;
@@ -168,6 +183,9 @@ export class AdminDashboardPage {
         break;
       case 'validations':
         this.api.artisans({ statut: this.statutArtisan(), q: this.qArtisan(), page: this.pageArtisan(), size: 8 }).subscribe((p) => this.artisans.set(p));
+        break;
+      case 'offres':
+        this.api.demandesOffre({ statut: this.statutOffre(), page: this.pageOffre(), size: 10 }).subscribe((p) => this.demandesOffre.set(p));
         break;
       case 'comptes':
         this.api.comptes({ filtre: this.filtreCompte(), q: this.qCompte(), page: this.pageCompte(), size: 15 }).subscribe((p) => this.comptes.set(p));
@@ -278,6 +296,52 @@ export class AdminDashboardPage {
       },
       error: (err) => this.fail(err),
     });
+  }
+
+  // ---------- Demandes d'offre ----------
+
+  protected preparerDecision(d: DemandeOffre, decision: DecisionOffre) {
+    this.decision = { reponse: '', moyen: d.moyenSouhaite, reference: '' };
+    this.decisionPour.set({ id: d.id, decision });
+  }
+
+  protected confirmerDecision(d: DemandeOffre) {
+    const cible = this.decisionPour();
+    if (!cible) return;
+    const reponse = this.decision.reponse.trim();
+    if ((cible.decision === 'REFUSEE' || cible.decision === 'SUSPENDRE_COMPTE') && !reponse) {
+      this.error.set(cible.decision === 'REFUSEE' ? "Expliquez le refus à l'artisan." : 'Indiquez le motif de la suspension.');
+      return;
+    }
+    if (cible.decision === 'SUSPENDRE_COMPTE' && !confirm(`Suspendre le compte de ${d.artisanNomComplet} ? Il ne pourra plus se connecter.`)) return;
+    this.busyId.set(d.id);
+    this.error.set(null);
+    this.api.traiterDemandeOffre(d.id, {
+      decision: cible.decision, reponse: reponse || undefined,
+      moyen: cible.decision === 'PAYEE' ? this.decision.moyen : null,
+      reference: this.decision.reference.trim() || undefined,
+    }).subscribe({
+      next: (maj) => {
+        this.busyId.set(null);
+        this.decisionPour.set(null);
+        this.demandesOffre.update((p) => p && { ...p, content: p.content.map((x) => (x.id === maj.id ? maj : x)) });
+        this.flash({
+          CONTACTEE: 'Demande marquée « contactée ».',
+          PAYEE: `Paiement de ${maj.formule.montant} MAD enregistré, offre activée.`,
+          REFUSEE: 'Demande refusée, artisan prévenu.',
+          SUSPENDRE_COMPTE: `Compte de ${maj.artisanNomComplet} suspendu.`,
+        }[cible.decision]);
+        this.loadStats();
+      },
+      error: (err) => this.fail(err),
+    });
+  }
+
+  /** WhatsApp prérempli au sujet de la demande */
+  protected whatsappDemande(d: DemandeOffre): string {
+    return lienWhatsApp(d.artisanTelephone ?? '',
+      `Bonjour ${d.artisanNomComplet.split(' ')[0]}, c'est l'équipe Hrayfi au sujet de votre demande « ${d.formule.libelle} » (${d.formule.montant} MAD). ` +
+      `Pour le paiement par ${d.moyenSouhaite === 'VIREMENT' ? 'virement' : d.moyenSouhaite === 'ESPECES' ? 'espèces' : d.moyenSouhaite === 'WAFACASH' ? 'Wafacash' : 'CashPlus'}, voici la marche à suivre :`);
   }
 
   // ---------- Comptes & paiements ----------

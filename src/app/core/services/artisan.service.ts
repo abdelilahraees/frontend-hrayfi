@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_URL } from '../api.config';
-import { ArtisanProche, ArtisanPublic, Offre, Page, VilleCoord } from '../models';
+import { ArtisanProche, ArtisanPublic, CodeFormule, DemandeOffre, Formule, MoyenPaiement, Offre, Page, VilleCoord } from '../models';
 import { toParams } from './http-params';
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +30,23 @@ export class ArtisanService {
   /** Offre Pro, mises en avant et paiements de l'artisan connecté */
   monOffre() {
     return this.http.get<Offre>(`${API_URL}/api/artisans/me/offre`);
+  }
+
+  /** Catalogue des offres et de ce qu'elles apportent */
+  formules() {
+    return this.http.get<Formule[]>(`${API_URL}/api/offres/formules`);
+  }
+
+  demanderOffre(body: { formule: CodeFormule; annonceId?: number | null; moyenSouhaite: MoyenPaiement; message?: string }) {
+    return this.http.post<DemandeOffre>(`${API_URL}/api/artisans/me/demandes-offre`, body);
+  }
+
+  mesDemandesOffre() {
+    return this.http.get<DemandeOffre[]>(`${API_URL}/api/artisans/me/demandes-offre`);
+  }
+
+  annulerDemandeOffre(id: number) {
+    return this.http.patch<DemandeOffre>(`${API_URL}/api/artisans/me/demandes-offre/${id}/annuler`, null);
   }
 
   get(id: number) {

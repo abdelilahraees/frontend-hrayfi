@@ -117,6 +117,8 @@ export interface Annonce {
   /** Mise en avant payée en cours */
   sponsorisee: boolean;
   sponsoriseJusquAu: string | null;
+  /** Badge « Artisan Pro » (offre Pro en cours) */
+  artisanPro: boolean;
 }
 
 export interface AnnonceRequest {
@@ -171,6 +173,8 @@ export interface ArtisanPublic {
   nbAvis: number;
   nbAnnonces: number;
   createdAt: string;
+  /** Badge « Artisan Pro » (offre Pro en cours) */
+  pro: boolean;
 }
 
 export interface Demande {
@@ -283,6 +287,7 @@ export interface AdminStats {
   aRelancer: number;
   annoncesMisesEnAvant: number;
   revenusParMois: { annee: number; mois: number; total: number }[];
+  demandesOffreEnAttente: number;
 }
 
 // ---------- Offre Pro et paiements (encaissés hors ligne) ----------
@@ -346,6 +351,8 @@ export interface Offre {
   proOffert: boolean;
   misesEnAvant: { id: number; titre: string; jusquAu: string }[];
   paiements: Paiement[];
+  /** Une demande d'offre attend la réponse de l'équipe */
+  demandeEnCours: boolean;
 }
 
 export interface AdminArtisan {
@@ -372,4 +379,42 @@ export interface AdminUser {
   role: Role;
   createdAt: string;
   statutValidation: StatutValidation | null;
+}
+
+// ---------- Demandes d'offre (envoyées par l'artisan, traitées par l'équipe) ----------
+
+export type CodeFormule = 'PRO_MOIS' | 'PRO_TRIMESTRE' | 'PRO_AN' | 'MISE_EN_AVANT_14' | 'MISE_EN_AVANT_30';
+export type StatutDemandeOffre = 'EN_ATTENTE' | 'CONTACTEE' | 'PAYEE' | 'REFUSEE' | 'ANNULEE';
+export type DecisionOffre = 'CONTACTEE' | 'PAYEE' | 'REFUSEE' | 'SUSPENDRE_COMPTE';
+
+/** Offre du catalogue avec ce qu'elle apporte */
+export interface Formule {
+  code: CodeFormule;
+  objet: ObjetPaiement;
+  libelle: string;
+  montant: number;
+  dureeJours: number;
+  avantages: string[];
+}
+
+export interface DemandeOffre {
+  id: number;
+  artisanId: number;
+  artisanNomComplet: string;
+  artisanTelephone: string | null;
+  artisanMetier: string;
+  artisanVille: string | null;
+  artisanStatut: StatutValidation;
+  statutPro: StatutPro;
+  proJusquAu: string | null;
+  formule: Formule;
+  annonceId: number | null;
+  annonceTitre: string | null;
+  moyenSouhaite: MoyenPaiement;
+  message: string | null;
+  statut: StatutDemandeOffre;
+  reponseAdmin: string | null;
+  traiteePar: string | null;
+  traiteeLe: string | null;
+  createdAt: string;
 }

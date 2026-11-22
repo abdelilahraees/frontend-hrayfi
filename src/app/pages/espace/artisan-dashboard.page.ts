@@ -7,7 +7,6 @@ import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage } from '../../core/http-error';
 import { Annonce, ArtisanDashboard, Demande, Offre, StatutDemande } from '../../core/models';
 import { ArtisanService } from '../../core/services/artisan.service';
-import { HRAYFI_WHATSAPP, TARIFS, lienWhatsApp } from '../../core/whatsapp';
 import { AnnonceService } from '../../core/services/annonce.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DemandeService } from '../../core/services/demande.service';
@@ -16,6 +15,7 @@ import { BarChartComponent } from '../../ui/bar-chart.component';
 import { AvatarComponent } from '../../ui/avatar.component';
 import { DashboardShellComponent } from '../../ui/dashboard-shell.component';
 import { IconComponent } from '../../ui/icon.component';
+import { MonOffreComponent } from './mon-offre.component';
 import { PagerComponent, paginate } from '../../ui/pager.component';
 import { PricePipe } from '../../ui/price.pipe';
 import { StarsComponent } from '../../ui/stars.component';
@@ -28,7 +28,7 @@ type Filtre = StatutDemande | 'TOUTES';
 @Component({
   selector: 'app-artisan-dashboard-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, PagerComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, RouterLink, AvatarComponent, BarChartComponent, DashboardShellComponent, IconComponent, MonOffreComponent, PagerComponent, PricePipe, StarsComponent, StatTileComponent, StatutBadgeComponent],
   templateUrl: './artisan-dashboard.page.html',
 })
 export class ArtisanDashboardPage {
@@ -48,12 +48,38 @@ export class ArtisanDashboardPage {
   protected readonly stats = signal<ArtisanDashboard | null>(null);
   /** Offre Pro, mises en avant et paiements (encaissés hors ligne par l'équipe) */
   protected readonly offre = signal<Offre | null>(null);
-  protected readonly TARIFS = TARIFS;
-  protected readonly contactEquipe = computed(() => {
-    const u = this.auth.user();
-    return lienWhatsApp(HRAYFI_WHATSAPP,
-      `Bonjour l'équipe Hrayfi, je suis ${u?.prenom ?? ''} ${u?.nom ?? ''} (${u?.email ?? ''}). Je souhaite prolonger mon offre Pro / mettre une annonce en avant.`);
+  /** Formulaire de choix d'offre ouvert dans « Mon offre » */
+  protected readonly choixOffre = signal(false);
+  /**
+   * Annonce affichée en haut de la page quand le Pro arrive à échéance (30 jours s'il est offert, 7 s'il est payé) ou est échu,
+   * tant qu'aucune demande d'offre n'est en cours.
+   */
+  protected readonly annonceOffre = computed(() => {
+    const o = this.offre();
+    if (!o?.proJusquAu || o.demandeEnCours) return null;
+    const jours = Math.ceil((new Date(o.proJusquAu).getTime() - Date.now()) / 86_400_000);
+    const date = new Date(o.proJusquAu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    if (o.statutPro === 'EXPIRE') {
+      return { titre: 'Votre offre Pro est arrivée à échéance', texte: `Depuis le ${date}, votre badge « Artisan Pro » n'est plus affiché aux clients. Choisissez une offre : l'équipe vous recontacte pour le paiement.` };
+    }
+    // Offert : prévenir un mois avant ; payé : une semaine avant, pour ne pas relancer quelqu'un qui vient de payer
+    if (jours <= (o.statutPro === 'OFFERT' ? 30 : 7)) {
+      return {
+        titre: o.statutPro === 'OFFERT' ? `Votre offre Pro offerte se termine dans ${jours} jour(s)` : `Votre offre Pro se termine dans ${jours} jour(s)`,
+        texte: `Le ${date}, votre badge « Artisan Pro » disparaîtra de votre profil, de vos annonces et de la carte. Prolongez dès maintenant, à partir de 149 MAD/mois.`,
+      };
+    }
+    return null;
   });
+
+  protected ouvrirChoixOffre() {
+    this.choixOffre.set(true);
+    setTimeout(() => document.getElementById('mon-offre')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  protected chargerOffre() {
+    this.artisansApi.monOffre().subscribe((o) => this.offre.set(o));
+  }
   protected readonly annonces = signal<Annonce[] | null>(null);
   protected readonly demandes = signal<Demande[] | null>(null);
   protected readonly error = signal<string | null>(null);
@@ -147,7 +173,7 @@ export class ArtisanDashboardPage {
   protected refresh() {
     this.dashboardApi.artisan().subscribe((s) => this.stats.set(s));
     this.annoncesApi.mine().subscribe((p) => this.annonces.set(p.content));
-    this.artisansApi.monOffre().subscribe((o) => this.offre.set(o));
+    this.chargerOffre();
     this.demandesApi.received(0, 200).subscribe((p) => {
       this.demandes.set(p.content);
       this.majLe.set(new Date());

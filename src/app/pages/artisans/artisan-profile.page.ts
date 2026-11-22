@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { BadgeProComponent } from '../../ui/badge-pro.component';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -15,7 +16,7 @@ import { StarsComponent } from '../../ui/stars.component';
 @Component({
   selector: 'app-artisan-profile-page',
   standalone: true,
-  imports: [DatePipe, RouterLink, AnnonceCardComponent, AvatarComponent, ContactWhatsappComponent, PagerComponent, StarsComponent],
+  imports: [BadgeProComponent, DatePipe, RouterLink, AnnonceCardComponent, AvatarComponent, ContactWhatsappComponent, PagerComponent, StarsComponent],
   template: `
     @if (notFound()) {
       <section class="max-w-3xl mx-auto px-4 py-24 text-center">
@@ -28,6 +29,7 @@ import { StarsComponent } from '../../ui/stars.component';
           <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="96" />
           <div class="flex-1">
             <h1 class="text-4xl sm:text-5xl">{{ a.prenom }} {{ a.nom }}</h1>
+            @if (a.pro) { <app-badge-pro class="mt-2" [grand]="true" /> }
             <p class="mt-2 text-lg text-encre-soft">{{ a.metier }}@if (a.ville) { · {{ a.ville }} }@if (a.tarifHoraire) { · {{ a.tarifHoraire }} MAD/h }</p>
             <app-stars class="mt-3" [value]="a.noteMoyenne" [count]="a.nbAvis" [size]="20" />
           </div>

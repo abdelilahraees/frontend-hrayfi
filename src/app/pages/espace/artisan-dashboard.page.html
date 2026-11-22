@@ -31,6 +31,17 @@
         </div>
       </section>
 
+      @if (annonceOffre(); as msg) {
+        <section class="mt-5 flex flex-col md:flex-row md:items-center gap-4 rounded-lg border border-citron/50 bg-citron-50 px-5 py-4" aria-label="Votre offre Pro">
+          <span class="grid size-10 shrink-0 place-items-center rounded-full bg-citron text-encre"><app-icon name="star" [size]="18" /></span>
+          <div class="flex-1">
+            <p class="font-semibold">{{ msg.titre }}</p>
+            <p class="mt-0.5 text-sm text-encre-soft">{{ msg.texte }}</p>
+          </div>
+          <button type="button" class="btn btn-menthe !py-2.5 shrink-0" (click)="ouvrirChoixOffre()">Choisir mon offre</button>
+        </section>
+      }
+
       <!-- Indicateurs -->
       <div class="mt-5 grid grid-cols-2 xl:grid-cols-4 gap-4">
         <app-stat-tile label="Revenus du mois" icon="wallet" [value]="s ? (s.chiffreAffairesCeMois | number: '1.0-0') + ' MAD' : '–'"
@@ -71,57 +82,7 @@
         </ol>
       </section>
 
-      <!-- Mon offre -->
-      @if (offre(); as o) {
-        <section class="dash-panel mt-5 grid lg:grid-cols-[1fr_340px]" aria-labelledby="offre-titre">
-          <div class="p-5">
-            <div class="flex flex-wrap items-center gap-3">
-              <h2 id="offre-titre" class="dash-title flex items-center gap-2"><app-icon name="star" [size]="16" class="text-menthe-deep" />Mon offre</h2>
-              <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                    [class]="o.statutPro === 'EXPIRE' ? 'bg-argile-50 text-[#8a3d22]' : o.statutPro === 'PAYE' ? 'bg-menthe-deep text-white' : 'bg-menthe-50 text-menthe-deep'">
-                {{ o.statutPro === 'EXPIRE' ? 'Pro arrivé à échéance' : o.statutPro === 'PAYE' ? 'Pro' : 'Pro offert' }}
-              </span>
-            </div>
-            <p class="mt-2 text-sm text-encre-soft leading-relaxed">
-              @switch (o.statutPro) {
-                @case ('OFFERT') { Toutes les fonctionnalités Pro vous sont offertes jusqu'au <strong class="text-encre">{{ o.proJusquAu | date: 'd MMMM y' }}</strong>. }
-                @case ('PAYE') { Votre offre Pro est active jusqu'au <strong class="text-encre">{{ o.proJusquAu | date: 'd MMMM y' }}</strong>. Merci de votre confiance. }
-                @case ('EXPIRE') { Votre offre Pro est arrivée à échéance le {{ o.proJusquAu | date: 'd MMMM y' }}. Vous gardez l'accès à votre espace : contactez l'équipe pour la prolonger. }
-                @default { Votre offre démarre dès la validation de votre compte. }
-              }
-            </p>
-            @if (o.misesEnAvant.length) {
-              <ul class="mt-4 space-y-1.5">
-                @for (m of o.misesEnAvant; track m.id) {
-                  <li class="flex items-center gap-2 text-sm">
-                    <span class="rounded-full bg-encre px-2 py-0.5 text-[11px] font-semibold text-citron">Mis en avant</span>
-                    <span class="truncate">{{ m.titre }}</span>
-                    <span class="ml-auto whitespace-nowrap text-xs text-encre-soft">jusqu'au {{ m.jusquAu | date: 'd MMM' }}</span>
-                  </li>
-                }
-              </ul>
-            }
-            @if (o.paiements.length) {
-              <p class="mt-4 text-xs text-encre-soft">
-                Dernier paiement : {{ o.paiements[0].montant | number: '1.0-0' }} MAD le {{ o.paiements[0].createdAt | date: 'd MMM y' }}
-                ({{ o.paiements[0].objet === 'ABONNEMENT_PRO' ? 'offre Pro' : 'mise en avant' }}) · {{ o.paiements.length }} paiement(s) au total
-              </p>
-            }
-          </div>
-          <div class="border-t lg:border-t-0 lg:border-l border-encre/[0.07] bg-chaux/60 p-5">
-            <p class="text-sm font-semibold">Prolonger ou être mis en avant</p>
-            <ul class="mt-2 space-y-1 text-[13px]">
-              <li class="flex justify-between"><span>Offre Pro, 1 mois</span><span class="font-semibold tabular-nums">{{ TARIFS.proMois }} MAD</span></li>
-              <li class="flex justify-between"><span>Offre Pro, 3 mois</span><span class="font-semibold tabular-nums">{{ TARIFS.proTrimestre }} MAD</span></li>
-              <li class="flex justify-between"><span>Annonce en tête, 14 jours</span><span class="font-semibold tabular-nums">{{ TARIFS.miseEnAvant14j }} MAD</span></li>
-            </ul>
-            <p class="mt-3 text-xs text-encre-soft">Paiement par CashPlus, Wafacash ou virement. L'équipe vous envoie les coordonnées et active l'offre dès réception.</p>
-            <a [href]="contactEquipe()" target="_blank" rel="noopener" class="btn mt-3 w-full !py-2.5 border-[#1f9d55] bg-[#25d366] text-[#0b3d20] hover:bg-[#1fbd5a]">
-              Contacter l'équipe sur WhatsApp
-            </a>
-          </div>
-        </section>
-      }
+      <app-mon-offre class="mt-5 block" [offre]="offre()" [annonces]="annonces() ?? []" [(ouvert)]="choixOffre" (change)="chargerOffre()" />
 
       <div class="mt-5 grid xl:grid-cols-3 gap-5 [&>*]:min-w-0">
         <!-- Revenus -->

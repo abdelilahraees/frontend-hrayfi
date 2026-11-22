@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { BadgeProComponent } from '../../ui/badge-pro.component';
 import { DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -20,7 +21,7 @@ type Source = { type: 'gps'; precisionM: number } | { type: 'ville'; nom: string
 @Component({
   selector: 'app-carte-page',
   standalone: true,
-  imports: [DecimalPipe, RouterLink, AvatarComponent, CarteComponent, ContactWhatsappComponent, IconComponent, StarsComponent],
+  imports: [BadgeProComponent, DecimalPipe, RouterLink, AvatarComponent, CarteComponent, ContactWhatsappComponent, IconComponent, StarsComponent],
   template: `
     <section class="grid lg:grid-cols-[400px_minmax(0,1fr)] lg:h-[calc(100dvh-4.5rem)] border-t border-encre/10">
       <!-- Carte -->
@@ -102,7 +103,7 @@ type Source = { type: 'gps'; precisionM: number } | { type: 'ville'; nom: string
                     <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="40" />
                     <span class="min-w-0 flex-1">
                       <span class="flex items-start justify-between gap-2">
-                        <span class="truncate font-semibold">{{ a.prenom }} {{ a.nom }}</span>
+                        <span class="truncate font-semibold">{{ a.prenom }} {{ a.nom }}@if (a.pro) { <app-badge-pro class="ml-1" /> }</span>
                         @if (p.misEnAvant) { <span class="shrink-0 rounded-full bg-citron-50 px-2 py-0.5 text-[11px] font-semibold text-[#7a5600]">Mis en avant</span> }
                         <span class="shrink-0 rounded-full bg-menthe-50 px-2 py-0.5 text-xs font-semibold text-menthe-deep tabular-nums">{{ distance(p.distanceKm) }}</span>
                       </span>

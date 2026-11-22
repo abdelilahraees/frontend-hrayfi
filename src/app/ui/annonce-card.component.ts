@@ -1,4 +1,5 @@
 import { Component, computed, input } from '@angular/core';
+import { BadgeProComponent } from './badge-pro.component';
 import { RouterLink } from '@angular/router';
 import { mediaUrl } from '../core/api.config';
 import { Annonce } from '../core/models';
@@ -8,7 +9,7 @@ import { PricePipe } from './price.pipe';
 @Component({
   selector: 'app-annonce-card',
   standalone: true,
-  imports: [RouterLink, StarsComponent, PricePipe],
+  imports: [BadgeProComponent, RouterLink, StarsComponent, PricePipe],
   template: `
     @let a = annonce();
     <a [routerLink]="['/annonces', a.id]"
@@ -29,7 +30,7 @@ import { PricePipe } from './price.pipe';
       </div>
       <div class="flex flex-1 flex-col p-5">
         <h3 class="text-[22px] leading-tight">{{ a.titre }}</h3>
-        <p class="mt-1 text-sm text-encre-soft">{{ a.artisanNomComplet }}@if (a.ville) { · {{ a.ville }} }</p>
+        <p class="mt-1 text-sm text-encre-soft">{{ a.artisanNomComplet }}@if (a.artisanPro) { <app-badge-pro class="ml-1" /> }@if (a.ville) { · {{ a.ville }} }</p>
         <app-stars class="mt-3" [value]="a.noteMoyenne" [count]="a.nbAvis" />
         <p class="mt-auto pt-4 font-display text-xl font-bold text-menthe-deep">{{ a | price }}</p>
       </div>

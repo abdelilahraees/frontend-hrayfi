@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_URL } from '../api.config';
-import { AdminArtisan, AdminCompte, AdminCompteDetail, AdminStats, AdminUser, Annonce, Avis, Demande, EnregistrerPaiement, FiltreCompte, Page, Role, StatutDemande, StatutValidation } from '../models';
+import { AdminArtisan, AdminCompte, AdminCompteDetail, AdminStats, AdminUser, Annonce, Avis, Demande, DecisionOffre, DemandeOffre, EnregistrerPaiement, FiltreCompte, MoyenPaiement, StatutDemandeOffre, Page, Role, StatutDemande, StatutValidation } from '../models';
 import { toParams } from './http-params';
 
 /** Endpoints /api/admin/** (rôle ADMIN). */
@@ -36,6 +36,14 @@ export class AdminService {
 
   modifierNote(id: number, note: string) {
     return this.http.patch<AdminCompte>(`${this.base}/comptes/${id}/note`, { note });
+  }
+
+  demandesOffre(filters: { statut?: StatutDemandeOffre | null; page?: number; size?: number }) {
+    return this.http.get<Page<DemandeOffre>>(`${this.base}/demandes-offre`, { params: toParams(filters) });
+  }
+
+  traiterDemandeOffre(id: number, body: { decision: DecisionOffre; reponse?: string; moyen?: MoyenPaiement | null; reference?: string }) {
+    return this.http.patch<DemandeOffre>(`${this.base}/demandes-offre/${id}`, body);
   }
 
   utilisateurs(filters: { role?: Role | null; q?: string; page?: number; size?: number }) {

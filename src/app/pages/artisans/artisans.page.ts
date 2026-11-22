@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { BadgeProComponent } from '../../ui/badge-pro.component';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,7 +22,7 @@ const DISPO: Record<string, { label: string; cls: string }> = {
 @Component({
   selector: 'app-artisans-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, AvatarComponent, PagerComponent, StarsComponent],
+  imports: [BadgeProComponent, FormsModule, RouterLink, AvatarComponent, PagerComponent, StarsComponent],
   template: `
     @let s = state();
     <section class="bg-chaux border-b border-encre/10">
@@ -69,7 +70,7 @@ const DISPO: Record<string, { label: string; cls: string }> = {
               <div class="flex items-center gap-4">
                 <app-avatar [name]="a.prenom + ' ' + a.nom" [size]="60" />
                 <div>
-                  <p class="font-display text-2xl font-bold leading-tight">{{ a.prenom }} {{ a.nom }}</p>
+                  <p class="font-display text-2xl font-bold leading-tight">{{ a.prenom }} {{ a.nom }}@if (a.pro) { <app-badge-pro class="ml-1" /> }</p>
                   <p class="text-encre-soft">{{ a.metier }}@if (a.ville) { · {{ a.ville }} }</p>
                 </div>
               </div>

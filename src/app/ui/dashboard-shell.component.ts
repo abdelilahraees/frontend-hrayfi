@@ -7,7 +7,7 @@ import { AvatarComponent } from './avatar.component';
 import { IconComponent, IconName } from './icon.component';
 import { KhatamComponent } from './khatam.component';
 
-export type DashSection = 'apercu' | 'demandes' | 'annonces' | 'profil' | 'messages' | 'validations' | 'utilisateurs' | 'avis' | 'comptes';
+export type DashSection = 'apercu' | 'demandes' | 'annonces' | 'profil' | 'messages' | 'validations' | 'utilisateurs' | 'avis' | 'comptes' | 'offres';
 
 interface NavItem {
   key: DashSection | 'recherche' | 'carte';
@@ -127,6 +127,8 @@ export class DashboardShellComponent {
   readonly title = input('');
   /** Pastille du menu : demandes en attente (artisan) ou artisans à valider (admin). */
   readonly pending = input<number | undefined>(undefined);
+  /** Admin : demandes d'offre en attente */
+  readonly pendingOffres = input<number | undefined>(undefined);
 
   protected readonly drawer = signal(false);
   protected readonly isArtisan = computed(() => this.auth.role() === 'ARTISAN');
@@ -145,6 +147,7 @@ export class DashboardShellComponent {
       return [
         admin('apercu', "Vue d'ensemble", 'home'),
         admin('validations', 'Artisans à valider', 'shield', this.pending()),
+        admin('offres', "Demandes d'offre", 'inbox', this.pendingOffres()),
         admin('comptes', 'Comptes & paiements', 'wallet'),
         admin('utilisateurs', 'Utilisateurs', 'user'),
         admin('annonces', 'Annonces', 'list'),
